@@ -1,0 +1,9 @@
+venv/
+hindsight-venv/
+__pycache__/
+*.pyc
+tina_index.json
+tina_index.tmp
+memory_pending.jsonl
+config.json.bak
+hindsight-data/

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TINA — Task Intelligence &amp; Network Assistant</title>
+<meta name="description" content="TINA is the DREAM Robotics fleet's working agent: a local Ollama LLM that reads, edits, compiles and checks code across the robot repos, with shared Hindsight memory.">
+<meta name="color-scheme" content="dark">
+<meta property="og:title" content="TINA — Task Intelligence &amp; Network Assistant">
+<meta property="og:description" content="The DREAM Robotics fleet's working agent — a local LLM that does real work in the repos.">
+<meta property="og:type" content="website">
+<style>
+  :root{
+    --bg:#0A0B0D; --panel:#121418; --border:#2A2E35; --divider:#1A1D22;
+    --text:#ECEAE6; --text-sec:#A5A29C; --text-dim:#66655F;
+    --accent:#F2A33A; --accent-hover:#F7C47A; --accent2:#3FA7D6; --steel:#C9D6DF;
+    --ok:#7FC8A9;
+    --mono:ui-monospace,"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{color:var(--accent-hover)}
+  header{text-align:center;padding:76px 0 40px;position:relative;overflow:hidden}
+  header::before{content:"";position:absolute;inset:-40% 0 auto 0;height:420px;z-index:0;
+    background:radial-gradient(60% 60% at 50% 0,rgba(242,163,58,.14),transparent 70%)}
+  header .wrap{position:relative;z-index:1}
+  .eyebrow{font:600 12px var(--mono);letter-spacing:.32em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(52px,12vw,104px)/1 var(--mono);letter-spacing:.12em;margin:10px 0 6px}
+  .tagline{font:500 clamp(15px,3.3vw,20px) var(--sans);color:var(--steel);letter-spacing:.02em}
+  .lede{max-width:620px;margin:20px auto 0;color:var(--text-sec)}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+  .btn{display:inline-block;padding:11px 20px;border:1px solid var(--border);border-radius:10px;
+    font:600 14px var(--sans);color:var(--text)}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.primary{background:rgba(242,163,58,.12);border-color:var(--accent);color:var(--accent)}
+  .tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+  .tag{font:12px var(--mono);color:var(--text-sec);background:var(--panel);
+    border:1px solid var(--border);border-radius:999px;padding:5px 12px}
+  section{padding:26px 0;border-top:1px solid var(--divider)}
+  h2{font:700 13px var(--mono);letter-spacing:.26em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .card h3{font:600 15px var(--sans);margin-bottom:6px}
+  .card p{color:var(--text-sec);font-size:14px}
+  pre{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px;
+    overflow:auto;font:13px/1.5 var(--mono);color:var(--steel);margin-top:8px}
+  pre .c{color:var(--accent2)}
+  .fleet{display:flex;gap:8px;flex-wrap:wrap}
+  .fleet .n{font:12px var(--mono);color:var(--accent2);background:var(--panel);
+    border:1px solid var(--border);border-radius:8px;padding:5px 10px}
+  footer{padding:36px 0 56px;text-align:center;color:var(--text-dim);font:12px var(--mono);border-top:1px solid var(--divider)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">A DREAM Robotics Agent</div>
+    <h1>TINA</h1>
+    <p class="tagline">Task Intelligence &amp; Network Assistant</p>
+    <p class="lede">The fleet's engineer: a local LLM agent that does real work across the robot repos — reading, editing, compiling and checking code, and remembering what it learned.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/CursedPrograms/TINA">View on GitHub</a>
+      <a class="btn" href="#run">How to run</a>
+    </div>
+    <div class="tags">
+      <span class="tag">Python</span><span class="tag">Ollama</span><span class="tag">qwen3</span>
+      <span class="tag">Flask</span><span class="tag">Hindsight memory</span><span class="tag">local-first</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="what">
+    <h2>What she does</h2>
+    <div class="grid">
+      <div class="card"><h3>Plans, then acts</h3><p>A short plan, then one step at a time — read or search first, edit small, look at the result before the next step.</p></div>
+      <div class="card"><h3>Checks her work</h3><p>Compiles or re-reads the file. She never says something works unless she verified it.</p></div>
+      <div class="card"><h3>Remembers</h3><p>Long-term memory via the shared Hindsight server (bank <code>tina</code>), so decisions carry across sessions.</p></div>
+      <div class="card"><h3>Knows her limits</h3><p>If something fails twice she stops and explains what she found instead of looping.</p></div>
+    </div>
+  </section>
+
+  <section id="run">
+    <h2>Run</h2>
+    <p style="color:var(--text-sec)">Starts her web UI on <a href="http://127.0.0.1:5013/">127.0.0.1:5013</a>.</p>
+    <pre>run.bat
+
+<span class="c">REM</span> or talk to her in the terminal:
+python tina.py --cli
+python tina.py --cli "fix the compile error in MILA's ESP8266 sketch"</pre>
+  </section>
+
+  <section id="fleet">
+    <h2>Part of the fleet</h2>
+    <div class="fleet">
+      <span class="n">DREAM</span><span class="n">RIFT</span><span class="n">NINA</span>
+      <span class="n">NORA</span><span class="n">MILA</span><span class="n">WHIP</span>
+      <span class="n">IDA</span><span class="n">KIDA</span><span class="n">ARM</span><span class="n">LYCEA</span>
+    </div>
+  </section>
+</main>
+
+<footer>
+  TINA · Task Intelligence &amp; Network Assistant · a DREAM Robotics agent
+</footer>
+
+</body>
+</html>

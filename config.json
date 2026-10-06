@@ -1,0 +1,24 @@
+{
+  "Config": {
+    "AppName": "TINA",
+    "Description": "Task Intelligence & Network Assistant - the fleet's working agent",
+    "TINA": {
+      "Port": 5013,
+      "Model": "qwen3:4b",
+      "OllamaUrl": "http://localhost:11434",
+      "Think": false,
+      "ContextTokens": 4096,
+      "MaxSteps": 25,
+      "Roots": [
+        ".."
+      ],
+      "AutoEdit": true,
+      "HindsightUrl": "http://localhost:8888",
+      "MemoryBank": "tina",
+      "RiftHost": "127.0.0.1",
+      "RiftPort": 5000,
+      "NinaUrl": "http://127.0.0.1:5012",
+      "VoicePitch": 1.15
+    }
+  }
+}

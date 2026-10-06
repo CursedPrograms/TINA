@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Colour scheme for TINA, the fleet's engineer: graphite with a workshop amber
+  and a blueprint blue. (Re-sample from images/tina_avatar.jpg once she has one.)
+  Format: one colour per line, written exactly as  name="..." value="#RRGGBB".
+-->
+<colour_scheme>
+  <colour name="background"       value="#0A0B0D"/>  <!-- window / page background -->
+  <colour name="panel"            value="#121418"/>  <!-- cards, panels, idle buttons -->
+  <colour name="border"           value="#2A2E35"/>  <!-- panel edges, button outlines -->
+  <colour name="divider"          value="#1A1D22"/>  <!-- lines between rows -->
+  <colour name="text"             value="#ECEAE6"/>  <!-- primary text -->
+  <colour name="text_sec"         value="#A5A29C"/>  <!-- secondary text -->
+  <colour name="text_dim"         value="#66655F"/>  <!-- labels, section titles -->
+  <colour name="accent"           value="#F2A33A"/>  <!-- workshop amber: logo, links, selected -->
+  <colour name="accent_hover"     value="#F7C47A"/>  <!-- lighter accent -->
+  <colour name="accent2"          value="#3FA7D6"/>  <!-- blueprint blue: tool calls, highlights -->
+  <colour name="accent3"          value="#C9D6DF"/>  <!-- steel -->
+  <colour name="ok"               value="#7FC8A9"/>  <!-- checks passed -->
+  <colour name="warn"             value="#FFBE50"/>  <!-- waiting on you -->
+  <colour name="problem"          value="#FF6B4A"/>  <!-- failed -->
+  <colour name="button_hover_bg"  value="#1C1A16"/>  <!-- button fill when hovered / selected -->
+  <colour name="danger_bg"        value="#210F0D"/>  <!-- danger button fill -->
+</colour_scheme>
