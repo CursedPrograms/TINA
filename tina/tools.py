@@ -95,7 +95,8 @@ class Tools:
         start = max(1, int(start))
         part = text[start - 1:start - 1 + int(lines)]
         body = "\n".join(f"{i:5}| {l}" for i, l in enumerate(part, start))
-        more = f"\n... ({len(text)} lines in all; read on with start={start + len(part)})" if start - 1 + len(part) < len(text) else ""
+        more = (f"\n... ({len(text)} lines in all; read on with start={start + len(part)}, or search_files"
+                f" this file's folder for what you need and read just around the hits)") if start - 1 + len(part) < len(text) else ""
         return _cut(body + more, 9000)
 
     def search_files(self, pattern, path=".", glob="*"):
