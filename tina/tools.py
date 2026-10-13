@@ -6,7 +6,7 @@ tools far better than many clever ones.
 
     free     read / list / search files, search the docs, fleet status, GET a
              robot's API, recall memories, whitelisted commands (git status,
-             compile checks...)
+             compile checks...), talking to a robot in Brainfuck
     logged   edit / write files inside her roots (AutoEdit; git can undo them)
     ask      any other command, git commit / push, anything that drives a robot,
              writing outside her roots
@@ -43,9 +43,10 @@ def _cut(text, limit=OUT_LIMIT):
 
 
 class Tools:
-    def __init__(self, cfg, docs, memory, ask):
-        """ask(question) -> bool: the user's yes/no (web page buttons, or the terminal)."""
-        self.cfg, self.docs, self.memory, self.ask = cfg, docs, memory, ask
+    def __init__(self, cfg, docs, memory, ask, talk=None):
+        """ask(question) -> bool: the user's yes/no (web page buttons, or the terminal).
+        talk(robot, phrase) -> str: says a phrase to a robot (web.py; she needs her speakers)."""
+        self.cfg, self.docs, self.memory, self.ask, self.talk = cfg, docs, memory, ask, talk
         self.roots = [Path(r) for r in cfg["Roots"]]
         self.log = []                      # every change she made, for the report
         self._arduino = self._find_arduino_cli()
@@ -208,6 +209,11 @@ class Tools:
             out["nina_recent"] = "NINA isn't running"
         return _cut(out)
 
+    def talk_to(self, robot, phrase="hello"):
+        if self.talk is None:
+            return "I can only talk to the robots from my page (python tina.py), not the terminal."
+        return self.talk(robot, phrase)
+
     def robot_api(self, url, method="GET"):
         method = method.upper()
         if not re.match(r"https?://", url):
@@ -245,12 +251,14 @@ class Tools:
         "run_command": ("Run a command (no shell tricks). git status/diff/log and compile checks run at once; anything else asks the user.", {"command": "the command line", "folder": "working folder (default .)"}),
         "compile_sketch": ("Compile an Arduino sketch folder to check it builds.", {"folder": "sketch folder", "board": "arduino:avr:uno | esp32:esp32:esp32 | esp8266:esp8266:generic"}),
         "fleet_status": ("Which robots are online (RIFT) and what NINA has noticed lately.", {}),
+        "talk_to": ("Say something to a robot or another program in the fleet (NINA, DREAM, KIDA, NORA...) in the fleet's Brainfuck language: you beep it, they beep their answer. Use this to greet or chat with them.",
+                    {"robot": "its name, e.g. NINA", "phrase": "hello | how are you | happy | curious | sleepy | play | bye"}),
         "robot_api": ("Call a robot's HTTP API. GET to read; anything that moves it asks the user.", {"url": "full URL", "method": "GET (default) or POST"}),
         "search_docs": ("Search all READMEs, TODOs, code and configs in the repos by keywords.", {"query": "keywords"}),
         "remember": ("Save a lasting fact or decision to long-term memory.", {"fact": "one clear sentence"}),
         "recall": ("Look something up in long-term memory.", {"query": "what to look for"}),
     }
-    REQUIRED = {"read_file": ["path"], "search_files": ["pattern"], "edit_file": ["path", "old", "new"], "write_file": ["path", "content"],
+    REQUIRED = {"talk_to": ["robot"], "read_file": ["path"], "search_files": ["pattern"], "edit_file": ["path", "old", "new"], "write_file": ["path", "content"],
                 "run_command": ["command"], "compile_sketch": ["folder"], "robot_api": ["url"], "search_docs": ["query"],
                 "remember": ["fact"], "recall": ["query"]}
 

@@ -46,6 +46,9 @@ NAG_GAP_S = 180        # she says "don't interrupt me" at most this often
 BUSY_LINE = "I'm working right now. Please don't interrupt me."
 BUSY_BF = "busy"       # the same, in Brainfuck
 WAKE_REPLY = "Yes?"    # "Hey TINA" on its own
+PHRASES = [("hello", "hi"), ("how are you", "hru?"), ("happy", "yay"), ("curious", "hm?"),
+           ("sleepy", "zzz"), ("play", "play"), ("bye", "bye")]       # the fleet's phrasebook, 0-6
+REPLIES = ["hi!", "ok:)", "yay!", "oh!", "nite", "yes!", "bye!"]  # 7-13
 FLEET_NEWS = 30        # NINA's latest notes she keeps
 FLEET_STALE_S = 120    # NINA's snapshot is old news after this
 PERSONA = ("the fleet's engineer: practical, precise and a little dry. You live on the PC, "
@@ -101,7 +104,7 @@ def create_app(cfg):
     def work(task):
         with busy:
             used["last"] = time.time()
-            tools = Tools(cfg, docs, memory, task.ask)
+            tools = Tools(cfg, docs, memory, task.ask, talk_to)
             agent = Agent(llm, tools, memory, cfg["MaxSteps"])
             try:
                 result = agent.run(task.text, task.emit, task.stop, fleet_briefing(fleet))
@@ -114,6 +117,40 @@ def create_app(cfg):
                 task.emit("error", f"{type(e).__name__}: {e}")
                 task.status = "failed"
             used["last"] = time.time()
+
+    def talk_to(robot, phrase):
+        """Her talk_to tool: she beeps a phrasebook phrase on the PC, the robot beeps its answer
+        (its /chirp, found through RIFT), and it goes in RIFT's mission log."""
+        words = phrase.lower().strip(" .!?")
+        u = next((i for i, (name, text) in enumerate(PHRASES) if words in (name, text) or name.startswith(words) or words.startswith(name)), None)
+        if u is None:
+            return f"I can only say: {', '.join(n for n, _ in PHRASES)}."
+        rift = f"http://{cfg['RiftHost']}:{cfg['RiftPort']}"
+        try:
+            roster = requests.get(f"{rift}/fleet", timeout=12).json()["robots"]
+        except (requests.RequestException, ValueError, KeyError):
+            return "RIFT isn't answering, so I can't find anyone to talk to."
+        who = next((r for r in roster if r.get("name", "").upper() == robot.upper()), None) or \
+            next((r for r in roster if r.get("name", "").upper().startswith(robot.upper())), None)
+        port = next((c[5:] for c in (who or {}).get("capabilities", []) if str(c).startswith("talk:")), None)
+        if not who or not port:
+            talkers = [r["name"] for r in roster if any(str(c).startswith("talk:") for c in r.get("capabilities", []))]
+            return f"{robot} isn't in the fleet or can't talk. Who can: {', '.join(talkers) or 'nobody right now'}."
+        code = voice.code(u)
+        if not code:
+            return "RIFT's phrasebook isn't next to me, so I can't speak Brainfuck."
+        voice.beep(code, wait=True)
+        try:
+            answered = requests.get(f"http://{who['ip']}:{port}/chirp", params={"u": u + 7}, timeout=5).ok
+        except requests.RequestException:
+            answered = False
+        said, reply = PHRASES[u][1], REPLIES[u]
+        line = f'TINA said "{said}" to {who["name"]}' + (f' and {who["name"]} answered "{reply}".' if answered else f", but {who['name']} didn't answer.")
+        try:
+            requests.post(f"{rift}/mission", json={"who": "TINA", "text": line}, timeout=2)
+        except requests.RequestException:
+            pass
+        return f'You beeped "{said}" to {who["name"]} in Brainfuck. ' + (f'{who["name"]} beeped back "{reply}".' if answered else f"{who['name']} didn't answer (busy or offline).")
 
     def available():
         """(free?, why): the robots may talk to her only when you're not using her."""
