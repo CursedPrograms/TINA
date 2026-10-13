@@ -7,7 +7,7 @@
       "Model": "qwen3:4b",
       "OllamaUrl": "http://localhost:11434",
       "Think": false,
-      "ContextTokens": 4096,
+      "ContextTokens": 8192,
       "MaxSteps": 25,
       "Roots": [
         ".."
