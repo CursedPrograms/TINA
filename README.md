@@ -13,7 +13,9 @@ and the robots NORA, MILA, WHIP, IDA, KIDA and ARM.
 - **Plans, then acts one step at a time** — read/search first, edit small, check the result before the next step.
 - **Checks her work** — compiles or re-reads files; never claims something works unless she verified it.
 - **Remembers** — long-term memory via the shared **Hindsight** server (memory bank `tina`), so decisions and context carry across sessions.
-- **Stays in her lane** — if something fails twice she stops and explains instead of looping.
+- **Stays in her lane** — if something fails twice she stops and explains instead of looping, and sticks to the job you gave her.
+- **Knows the fleet** — `fleet_guide.md` (who's who, their hardware, where each robot's code is), the list of repos, NINA's latest news and how each robot says it is go into her prompt, so "MILA" leads her straight to `MILA-Robot-v00`. What's true now is kept apart from old news.
+- **Searches before reading** — she finds a part in a repo with a search, then reads around the hits instead of whole files.
 
 ## Talking with her
 
@@ -21,6 +23,7 @@ and the robots NORA, MILA, WHIP, IDA, KIDA and ARM.
 - **She shows what she's doing** — a badge by the mic (say "Hey TINA" / hearing you / understanding / go ahead / thinking / speaking), a live mic level, and what she heard.
 - **Reasoning switch** — her page shows every thought; the **reasoning** switch hides them when you only want the answers.
 - **Talks with the fleet** — she registers with RIFT as `talk` and `peer`. When nobody has used her for a couple of minutes, RIFT can pair her with DREAM or KIDA-01: rock paper scissors, then the winner picks words (her Piper voice) or Brainfuck (the fleet's phrasebook, beeped through the PC's speakers). Simple chirp conversations go the same way.
+- **Talks to the robots** — "say hello to NINA": she beeps a phrase from the fleet's Brainfuck phrasebook, the robot beeps its answer, and it lands in RIFT's mission log (`talk_to`).
 - **Fleet news from NINA** — NINA sends her everything she notices as it happens and a snapshot of the fleet every 30 s (`POST /fleet_news`), so TINA starts every job knowing who's up, who's slow and what went wrong lately.
 - **Don't interrupt** — while she's working she tells whoever asks, out loud ("I'm working right now. Please don't interrupt me.") or in Brainfuck, at most every three minutes, and says no.
 
