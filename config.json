@@ -19,7 +19,8 @@
       "RiftPort": 5000,
       "NinaUrl": "http://127.0.0.1:5012",
       "VoicePitch": 1.15,
-      "Voice": "en_GB-jenny_dioco-medium"
+      "Voice": "en_GB-jenny_dioco-medium",
+      "Whisper": "base.en"
     }
   }
 }

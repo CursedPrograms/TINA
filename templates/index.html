@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TINA</title>
-  <link rel="stylesheet" href="/static/tina.css">
-  <script src="/static/tina.js" defer></script>
+  <link rel="stylesheet" href="/static/tina.css?v={{ ver }}">
+  <script src="/static/tina.js?v={{ ver }}" defer></script>
 </head>
 <body>
   <header>
@@ -18,7 +18,12 @@
     <div class="empty" id="empty">Give TINA a job: fix a compile error, find where something lives,<br>update a README, check on the fleet. She shows every step, and asks before anything risky.</div>
   </main>
   <footer>
-    <form id="f"><textarea id="t" placeholder="What should TINA do? (Enter to send, Shift+Enter for a new line)"></textarea><button type="button" id="mic" title="Talk to her (Chrome or Edge). Click again to stop.">MIC</button><button>SEND</button></form>
+    <div class="voicebar" id="voicebar" hidden>
+      <span class="vstate off" id="vstate">MIC OFF</span>
+      <span class="meter" title="what the mic hears"><span id="level"></span></span>
+      <span class="heard" id="heard"></span>
+    </div>
+    <form id="f"><textarea id="t" placeholder="What should TINA do? (Enter to send, Shift+Enter for a new line)"></textarea><button type="button" id="mic" title="Voice chat: say &quot;Hey TINA&quot;. Click again to turn the mic off.">MIC</button><button>SEND</button></form>
   </footer>
 </body>
 </html>

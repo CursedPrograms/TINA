@@ -6,6 +6,9 @@ web.py - TINA's page (:5013) and her place in the fleet.
     GET  /task/<id>   the steps so far, a pending question if she's waiting on you, the answer
     POST /task/<id>/answer   {"yes": true|false}  - your reply to her question
     POST /task/<id>/stop
+    POST /fleet_news  NINA keeps her up to date: {"from", "event": {...}} or {"from", "snapshot": {...}}
+    GET  /fleet_news  what she knows about the fleet right now
+    POST /hear        a clip from the page's mic -> what Whisper heard, and the task if you said "Hey TINA"
     /voice/<file>     a cached line of hers (Piper mp3/wav)
     /peer /peer/rps /peer/choose /peer/say   real conversations (peer_talk.py)
     /status /ping /chirp?u=0-16 /avatar.jpg /colour_scheme.xml
@@ -23,6 +26,7 @@ import re
 import threading
 import time
 import uuid
+from collections import deque
 
 import requests
 from flask import Flask, jsonify, render_template, request, send_from_directory
@@ -33,6 +37,7 @@ from .docs import DocIndex
 from .llm import Ollama
 from .memory import Memory
 from .tools import Tools
+from .ears import Ears, wake
 from .voice import CACHE, Voice, phrasebook
 from . import peer_talk
 
@@ -40,6 +45,9 @@ QUIET_S = 120          # after you've used her, she stays yours this long before
 NAG_GAP_S = 180        # she says "don't interrupt me" at most this often
 BUSY_LINE = "I'm working right now. Please don't interrupt me."
 BUSY_BF = "busy"       # the same, in Brainfuck
+WAKE_REPLY = "Yes?"    # "Hey TINA" on its own
+FLEET_NEWS = 30        # NINA's latest notes she keeps
+FLEET_STALE_S = 120    # NINA's snapshot is old news after this
 PERSONA = ("the fleet's engineer: practical, precise and a little dry. You live on the PC, "
            "read and fix the other robots' code, and don't move.")
 
@@ -84,9 +92,11 @@ def create_app(cfg):
     memory = Memory(cfg)
     docs = DocIndex(cfg["Roots"], ROOT / "tina_index.json")
     voice = Voice(cfg)
+    ears = Ears(cfg)
     tasks = {}
     busy = threading.Lock()      # one task at a time: a 4B model on one GPU  (NOTE(move): could run more on the other PC)
     used = {"last": 0.0, "nagged": 0.0}
+    fleet = {"snapshot": None, "at": 0.0, "news": deque(maxlen=FLEET_NEWS)}    # from NINA
 
     def work(task):
         with busy:
@@ -94,7 +104,7 @@ def create_app(cfg):
             tools = Tools(cfg, docs, memory, task.ask)
             agent = Agent(llm, tools, memory, cfg["MaxSteps"])
             try:
-                result = agent.run(task.text, task.emit, task.stop)
+                result = agent.run(task.text, task.emit, task.stop, fleet_briefing(fleet))
                 if task.voice:           # only her final answer is spoken, never her reasoning
                     audio = voice.render(_speakable(result["answer"]))
                     result["audio"] = f"/voice/{audio.name}" if audio else None
@@ -150,7 +160,8 @@ def create_app(cfg):
 
     @app.route("/")
     def index():
-        return render_template("index.html", model=cfg["Model"])
+        ver = int(max((ROOT / "static" / f).stat().st_mtime for f in ("tina.js", "tina.css")))   # fresh files after an update
+        return render_template("index.html", model=cfg["Model"], ver=ver)
 
     @app.route("/task", methods=["POST"])
     def new_task():
@@ -190,12 +201,48 @@ def create_app(cfg):
     @app.route("/status")
     def status():
         return jsonify({"model": cfg["Model"], "model_ready": llm.available(), "memory": memory.status(),
-                        "voice": voice.status(), "busy": busy.locked(), "tasks": [{"id": t.id, "task": t.text[:80], "status": t.status}
+                        "voice": voice.status(), "ears": ears.status(), "busy": busy.locked(), "tasks": [{"id": t.id, "task": t.text[:80], "status": t.status}
                                                          for t in list(tasks.values())[-10:]]})
 
     @app.route("/ping")
     def ping():
         return "TINA alive", 200, {"Content-Type": "text/plain"}
+
+    @app.route("/fleet_news", methods=["GET", "POST"])
+    def fleet_news():
+        if request.method == "POST":
+            body = request.get_json(silent=True) or {}
+            if isinstance(body.get("snapshot"), dict):
+                fleet["snapshot"], fleet["at"] = body["snapshot"], time.time()
+            if isinstance(body.get("event"), dict):
+                fleet["news"].append(body["event"])
+            return jsonify({"ok": True})
+        return jsonify({"briefing": fleet_briefing(fleet), "snapshot": fleet["snapshot"], "news": list(fleet["news"])})
+
+    @app.route("/hear", methods=["POST"])
+    def hear():
+        """A clip from the page's mic. mode "wake": it only counts with her name in it
+        ("Hey TINA, ..."); mode "command": she's already listening, all of it counts.
+        -> {"heard", "task": what to do or "", "reply": a line to play first, or null}"""
+        f = request.files.get("audio")
+        if not f:
+            return jsonify({"error": "no audio"}), 400
+        try:
+            heard = ears.transcribe(f.read(), suffix=".webm" if "webm" in (f.mimetype or "webm") else ".ogg")
+        except Exception as e:
+            return jsonify({"error": f"Whisper failed: {e}"}), 500
+        if request.form.get("mode") != "command":
+            woke, heard_task = wake(heard)
+            if not woke:
+                return jsonify({"heard": heard, "task": "", "reply": None})
+        else:
+            heard_task = heard.strip()
+        used["last"] = time.time()
+        reply = None
+        if not heard_task and request.form.get("mode") != "command":
+            audio = voice.render(WAKE_REPLY)          # just her name: "Yes?", then she listens for the task
+            reply = f"/voice/{audio.name}" if audio else None
+        return jsonify({"heard": heard, "task": heard_task, "reply": reply, "woke": True})
 
     @app.route("/voice/<name>")
     def voice_file(name):
@@ -233,6 +280,31 @@ def create_app(cfg):
 
     threading.Thread(target=_heartbeat, args=(cfg,), daemon=True, name="rift-heartbeat").start()
     return app
+
+
+def fleet_briefing(fleet):
+    """What NINA has told her, in a few lines for her prompt."""
+    snap, lines = fleet["snapshot"], []
+    if snap:
+        age = time.time() - fleet["at"]
+        up = lambda v: "up" if v else "down" if v is False else "unknown"
+        lines.append(f"(snapshot {int(age)} s old{', NINA may have stopped' if age > FLEET_STALE_S else ''})")
+        lines.append(f"RIFT: {up(snap.get('rift_up'))}. This PC's WiFi: {snap.get('wifi') or 'unknown'}.")
+        n = snap.get("nora") or {}
+        lines.append(f"NORA: {up(n.get('up'))}" + (f", {n['ms']} ms" if n.get("ms") else "")
+                     + (f", mode {n['mode']}" + (f" (set by {n['msrc']})" if n.get("msrc") else "") if n.get("mode") else ""))
+        robots = snap.get("robots") or {}
+        if robots:
+            lines.append("Robots: " + ", ".join(f"{name} {up(r.get('up'))}" + (f" {r['ms']} ms" if r.get("up") and r.get("ms") else "")
+                                                for name, r in sorted(robots.items())))
+        if snap.get("ports"):
+            lines.append("Serial ports: " + ", ".join(f"{k} {v}" for k, v in snap["ports"].items()))
+    news = [e for e in fleet["news"] if time.time() - e.get("t", 0) < 3600][-8:]
+    if news:
+        lines.append("What NINA noticed lately:")
+        lines += [f"- {time.strftime('%H:%M', time.localtime(e.get('t', 0)))} {e.get('level', '')}: {e.get('text', '')}"
+                  + (f" ({e['why']})" if e.get("why") else "") for e in news]
+    return "\n".join(lines)
 
 
 def _speakable(text):

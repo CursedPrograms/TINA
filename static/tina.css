@@ -46,3 +46,17 @@ textarea:focus { outline: none; border-color: var(--accent); }
 .switch input:checked + span::after { transform: translateX(14px); background: var(--accent); }
 #mic.on { border-color: var(--accent); color: var(--accent); }
 #mic:disabled { opacity: .4; cursor: default; }
+.voicebar { max-width: 980px; margin: 0 auto 10px; display: flex; align-items: center; gap: 12px; font-size: .78rem; }
+.voicebar[hidden] { display: none; }
+.vstate { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-sec); white-space: nowrap; letter-spacing: .05em; }
+.vstate.wake { color: var(--accent2); border-color: var(--accent2); }
+.vstate.hearing { color: var(--accent); border-color: var(--accent); animation: pulse 1s infinite; }
+.vstate.transcribing, .vstate.thinking { color: var(--warn); border-color: var(--warn); animation: pulse 1.6s infinite; }
+.vstate.command { color: var(--ok); border-color: var(--ok); }
+.vstate.speaking { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+.vstate.error { color: var(--problem); border-color: var(--problem); }
+@keyframes pulse { 50% { opacity: .45; } }
+.meter { width: 90px; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; flex: none; }
+.meter span { display: block; height: 100%; width: 0; background: var(--ok); transition: width .05s linear; }
+.heard { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.said { color: var(--accent2); font-size: .75rem; }

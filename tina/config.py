@@ -21,6 +21,7 @@ DEFAULTS = {
     "NinaUrl": "http://127.0.0.1:5012",
     "VoicePitch": 1.15,               # her Brainfuck beeps, relative to the phrasebook's tones
     "Voice": "en_GB-jenny_dioco-medium",   # her Piper voice (voices/<name>.onnx; run.bat fetches it)
+    "Whisper": "base.en",             # her ears (faster-whisper on the CPU; tiny.en is quicker, small.en hears better)
 }
 
 

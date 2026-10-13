@@ -41,11 +41,14 @@ class Agent:
             if len(c) > TRIM_TO:
                 messages[i]["content"] = c[:TRIM_TO] + " ... [older output trimmed]"
 
-    def run(self, task, emit=lambda kind, data: None, stop=None):
-        """Do the task. emit(kind, data) reports progress: plan/think, tool, result, answer, error."""
+    def run(self, task, emit=lambda kind, data: None, stop=None, fleet=""):
+        """Do the task. emit(kind, data) reports progress: plan/think, tool, result, answer, error.
+        fleet: what NINA last told her about the fleet (web.py's fleet_briefing)."""
         started = time.time()
         recalled = self.memory.recall(task)
         system = SYSTEM
+        if fleet:
+            system += "\n\nThe fleet right now, as NINA (the caretaker) last told you:\n" + fleet
         if recalled:
             system += "\n\nWhat you remember that may matter:\n" + "\n".join(f"- {m}" for m in recalled[:6])
             emit("memory", recalled[:6])

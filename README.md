@@ -17,9 +17,11 @@ and the robots NORA, MILA, WHIP, IDA, KIDA and ARM.
 
 ## Talking with her
 
-- **Voice chat** — press **MIC** on her page (Chrome or Edge) and talk. She answers out loud in her own Piper voice, then listens again; silence ends the chat. Only her final answer is spoken, never her reasoning.
+- **Voice chat** — press **MIC** on her page and say **"Hey TINA"**: "Hey TINA, which robots are online?" is a task straight away; "Hey TINA" on its own gets a "Yes?" and she listens. Her own Whisper (faster-whisper, on the CPU) hears you; she answers out loud in her Piper voice, and for a few seconds after you can carry on without her name. Only her final answer is spoken, never her reasoning.
+- **She shows what she's doing** — a badge by the mic (say "Hey TINA" / hearing you / understanding / go ahead / thinking / speaking), a live mic level, and what she heard.
 - **Reasoning switch** — her page shows every thought; the **reasoning** switch hides them when you only want the answers.
 - **Talks with the fleet** — she registers with RIFT as `talk` and `peer`. When nobody has used her for a couple of minutes, RIFT can pair her with DREAM or KIDA-01: rock paper scissors, then the winner picks words (her Piper voice) or Brainfuck (the fleet's phrasebook, beeped through the PC's speakers). Simple chirp conversations go the same way.
+- **Fleet news from NINA** — NINA sends her everything she notices as it happens and a snapshot of the fleet every 30 s (`POST /fleet_news`), so TINA starts every job knowing who's up, who's slow and what went wrong lately.
 - **Don't interrupt** — while she's working she tells whoever asks, out loud ("I'm working right now. Please don't interrupt me.") or in Brainfuck, at most every three minutes, and says no.
 
 Her lines are rendered once and cached in `voice_cache/` (mp3 with ffmpeg, wav without). `run.bat` fetches her voice into `voices/` the first time.
@@ -52,6 +54,7 @@ python tina.py --cli "fix the compile error in MILA's ESP8266 sketch"
 | `Roots` | `[".."]` | the repos she works in |
 | `Voice` | `en_GB-jenny_dioco-medium` | her [Piper voice](https://huggingface.co/rhasspy/piper-voices) |
 | `VoicePitch` | `1.15` | her Brainfuck beeps, relative to the phrasebook's tones |
+| `Whisper` | `base.en` | her ears (`tiny.en` is quicker, `small.en` hears better) |
 
 ## Part of the DREAM Robotics fleet
 
