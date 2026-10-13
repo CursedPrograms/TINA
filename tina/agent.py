@@ -47,6 +47,22 @@ def _repos(roots):
     return "\n\nThe repos (paths are relative to the first folder):\n" + "\n".join(lines) if lines else ""
 
 
+WRITTEN_CALL = re.compile(r'\{\s*"name"\s*:\s*"(\w+)"\s*,\s*"arguments"\s*:\s*(\{[^{}]*\})\s*\}', re.S)
+
+
+def _written_call(text, tools):
+    """qwen3 sometimes writes a tool call into its reply ({"name": ..., "arguments": {...}},
+    maybe in <tool_call> tags) instead of making it. That's a call, not her answer."""
+    m = WRITTEN_CALL.search(text or "")
+    if not m or m.group(1) not in tools:
+        return None
+    try:
+        args = json.loads(m.group(2))
+    except ValueError:
+        return None
+    return {"function": {"name": m.group(1), "arguments": args}}
+
+
 def _guide():
     """fleet_guide.md: who's who in the fleet and where their code is, so she doesn't have to work it out."""
     try:
@@ -93,6 +109,10 @@ class Agent:
                 emit("think", msg["thinking"].strip()[:1500])
             calls = msg.get("tool_calls") or []
             content = re.sub(r"<think>.*?</think>", "", msg.get("content") or "", flags=re.S).strip()
+            if not calls:
+                call = _written_call(content, self.tools.SPECS)
+                if call:                  # she wrote the call out as text instead of making it
+                    calls, content = [call], ""
             messages.append({"role": "assistant", "content": content, "tool_calls": calls} if calls else
                             {"role": "assistant", "content": content})
             if not calls:

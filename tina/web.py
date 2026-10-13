@@ -121,6 +121,8 @@ def create_app(cfg):
     def talk_to(robot, phrase):
         """Her talk_to tool: she beeps a phrasebook phrase on the PC, the robot beeps its answer
         (its /chirp, found through RIFT), and it goes in RIFT's mission log."""
+        if robot.strip().upper() == "TINA":
+            return "That's you - you can't talk to yourself. Talk to another robot, e.g. NINA."
         words = phrase.lower().strip(" .!?")
         u = next((i for i, (name, text) in enumerate(PHRASES) if words in (name, text) or name.startswith(words) or words.startswith(name)), None)
         if u is None:
