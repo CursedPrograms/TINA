@@ -11,6 +11,7 @@ memory so the next task starts knowing it.
 import json
 import re
 import time
+from pathlib import Path
 
 from .llm import LLMError
 
@@ -19,15 +20,39 @@ SYSTEM = """You are TINA, the Task Intelligence & Network Assistant of the DREAM
 How you work:
 - Start with a 1-3 line plan. Then do ONE step at a time with a tool and look at the result before the next step.
 - Look before you change: read or search the code first. Never guess file contents.
+- A robot's code is in its repo folder (MILA -> MILA-Robot-v00). Robot firmware is Arduino: .ino, .cpp and .h files, not just .py.
+- Only say what you read in the code. If you couldn't find the code, say that instead of explaining from guesses.
 - Edit with edit_file, copying the old text exactly. Keep changes small and in the style of the code around them.
 - Check your work: compile, run py_compile, or read the file back. Never say something works unless you checked it.
 - If something fails twice, stop and explain what you found instead of looping.
+- Stay on the user's task. If you notice another problem on the way, mention it in your report; don't go fixing it.
+- Fleet news has times: an older problem that a newer note says is fixed is over.
 - Use search_docs to find where things are; use recall for what you learned before; remember lasting decisions.
 - Finish with a short plain report: what you did, which files, what you checked and the result, and anything left to do.
 Be brief. No markdown tables."""
 
 KEEP_FULL = 4          # the newest tool results stay whole; older ones are trimmed
 TRIM_TO = 400
+
+
+def _repos(roots):
+    """The repos she works in, so a robot's name leads her to its folder."""
+    lines = []
+    for root in roots:
+        try:
+            names = sorted(p.name for p in Path(root).iterdir() if p.is_dir() and not p.name.startswith((".", "_")))
+        except OSError:
+            continue
+        lines.append(f"{root}: " + ", ".join(names))
+    return "\n\nThe repos (paths are relative to the first folder):\n" + "\n".join(lines) if lines else ""
+
+
+def _guide():
+    """fleet_guide.md: who's who in the fleet and where their code is, so she doesn't have to work it out."""
+    try:
+        return "\n\nThe fleet:\n" + (Path(__file__).resolve().parents[1] / "fleet_guide.md").read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
 
 
 class Agent:
@@ -46,7 +71,7 @@ class Agent:
         fleet: what NINA last told her about the fleet (web.py's fleet_briefing)."""
         started = time.time()
         recalled = self.memory.recall(task)
-        system = SYSTEM
+        system = SYSTEM + _guide() + _repos(self.tools.roots)
         if fleet:
             system += "\n\nThe fleet right now, as NINA (the caretaker) last told you:\n" + fleet
         if recalled:

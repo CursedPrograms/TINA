@@ -37,6 +37,11 @@ NEVER = re.compile(r"\b(format|rmdir|rd|del|erase|rm|shutdown|diskpart|reg\s+del
 DRIVE_PATHS = re.compile(r"/(fw|bw|left|right|turn|stop|mode|link|ida|motorlock|setspeed|setcal|savecal|uv|mu|chirp|board/)", re.I)
 
 
+def _ago(s):
+    s = int(s)
+    return f"{s} s ago" if s < 90 else f"{s // 60} min ago" if s < 5400 else f"{s // 3600} h ago"
+
+
 def _cut(text, limit=OUT_LIMIT):
     text = text if isinstance(text, str) else json.dumps(text, ensure_ascii=False)
     return text if len(text) <= limit else text[:limit] + f"\n... [{len(text) - limit} more characters cut]"
@@ -195,18 +200,25 @@ class Tools:
 
     # ---------------------------------------------------------------- the fleet
     def fleet_status(self):
-        out = {}
+        """Now (checked live) kept apart from NINA's history, each note with its age: an old
+        problem that a newer note says is fixed is not a problem now."""
+        out = {"now": {}}
         try:
-            out["robots"] = [{"name": r.get("name"), "url": r.get("url"), "type": r.get("type")}
-                             for r in requests.get(f"http://{self.cfg['RiftHost']}:{self.cfg['RiftPort']}/fleet", timeout=12).json()["robots"]]
+            robots = requests.get(f"http://{self.cfg['RiftHost']}:{self.cfg['RiftPort']}/fleet", timeout=12).json()["robots"]
+            out["now"]["rift"] = "up"
+            out["now"]["online"] = [{"name": r.get("name"), "url": r.get("url"), "type": r.get("type")} for r in robots]
+            out["now"]["note"] = "Only these are online. A robot not listed isn't connected to RIFT right now."
         except (requests.RequestException, ValueError, KeyError):
-            out["robots"] = "RIFT isn't answering"
+            out["now"]["rift"] = "not answering"
         try:
             s = requests.get(f"{self.cfg['NinaUrl']}/status", timeout=4).json()
-            out["nina_recent"] = [f"{e['level']}: {e['text']} {e.get('why', '')}".strip() for e in s.get("events", [])[:8]]
-            out["nora"] = s.get("nora")
-        except (requests.RequestException, ValueError):
-            out["nina_recent"] = "NINA isn't running"
+            out["now"]["nora"] = s.get("nora")
+            now = time.time()
+            out["nina_history"] = [f"{_ago(now - e['t'])}, {e['level']}: {e['text']} {e.get('why', '')}".strip()
+                                   for e in s.get("events", [])[:8]]
+            out["nina_history_note"] = "Newest first. Older notes may be resolved by newer ones; trust 'now'."
+        except (requests.RequestException, ValueError, KeyError):
+            out["now"]["nina"] = "not running"
         return _cut(out)
 
     def talk_to(self, robot, phrase="hello"):
@@ -245,7 +257,7 @@ class Tools:
     SPECS = {
         "list_files": ("List a folder (relative to the GitHub folder, or absolute).", {"path": "folder", "pattern": "glob, default *"}),
         "read_file": ("Read a file with line numbers, 150 lines at a time.", {"path": "file", "start": "first line (default 1)", "lines": "how many (default 150)"}),
-        "search_files": ("Regex search through files under a folder.", {"pattern": "regex", "path": "folder (default .)", "glob": "file glob, e.g. *.py"}),
+        "search_files": ("Regex search through files under a folder (a robot's repo folder is best).", {"pattern": "regex", "path": "folder, e.g. MILA-Robot-v00 (default: all repos)", "glob": "file glob, e.g. *.ino or *.py (default: all files)"}),
         "edit_file": ("Replace one exact, unique piece of text in a file. Copy old text exactly from read_file (without the line numbers).", {"path": "file", "old": "exact existing text", "new": "replacement"}),
         "write_file": ("Create a new file, or replace a whole file.", {"path": "file", "content": "full contents"}),
         "run_command": ("Run a command (no shell tricks). git status/diff/log and compile checks run at once; anything else asks the user.", {"command": "the command line", "folder": "working folder (default .)"}),
