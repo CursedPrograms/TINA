@@ -7,3 +7,5 @@ tina_index.tmp
 memory_pending.jsonl
 config.json.bak
 hindsight-data/
+voices/
+voice_cache/

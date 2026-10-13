@@ -19,7 +19,8 @@ DEFAULTS = {
     "RiftHost": "127.0.0.1",
     "RiftPort": 5000,
     "NinaUrl": "http://127.0.0.1:5012",
-    "VoicePitch": 1.15,
+    "VoicePitch": 1.15,               # her Brainfuck beeps, relative to the phrasebook's tones
+    "Voice": "en_GB-jenny_dioco-medium",   # her Piper voice (voices/<name>.onnx; run.bat fetches it)
 }
 
 

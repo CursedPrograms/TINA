@@ -15,6 +15,15 @@ and the robots NORA, MILA, WHIP, IDA, KIDA and ARM.
 - **Remembers** — long-term memory via the shared **Hindsight** server (memory bank `tina`), so decisions and context carry across sessions.
 - **Stays in her lane** — if something fails twice she stops and explains instead of looping.
 
+## Talking with her
+
+- **Voice chat** — press **MIC** on her page (Chrome or Edge) and talk. She answers out loud in her own Piper voice, then listens again; silence ends the chat. Only her final answer is spoken, never her reasoning.
+- **Reasoning switch** — her page shows every thought; the **reasoning** switch hides them when you only want the answers.
+- **Talks with the fleet** — she registers with RIFT as `talk` and `peer`. When nobody has used her for a couple of minutes, RIFT can pair her with DREAM or KIDA-01: rock paper scissors, then the winner picks words (her Piper voice) or Brainfuck (the fleet's phrasebook, beeped through the PC's speakers). Simple chirp conversations go the same way.
+- **Don't interrupt** — while she's working she tells whoever asks, out loud ("I'm working right now. Please don't interrupt me.") or in Brainfuck, at most every three minutes, and says no.
+
+Her lines are rendered once and cached in `voice_cache/` (mp3 with ffmpeg, wav without). `run.bat` fetches her voice into `voices/` the first time.
+
 ## Run
 
 ```bat
@@ -41,6 +50,8 @@ python tina.py --cli "fix the compile error in MILA's ESP8266 sketch"
 | `HindsightUrl` | `http://localhost:8888` | shared memory server (DREAM hosts it) |
 | `MemoryBank` | `tina` | her bank in Hindsight |
 | `Roots` | `[".."]` | the repos she works in |
+| `Voice` | `en_GB-jenny_dioco-medium` | her [Piper voice](https://huggingface.co/rhasspy/piper-voices) |
+| `VoicePitch` | `1.15` | her Brainfuck beeps, relative to the phrasebook's tones |
 
 ## Part of the DREAM Robotics fleet
 
@@ -49,6 +60,26 @@ DREAM · RIFT · NINA · NORA · MILA · WHIP · IDA · KIDA · ARM · LYCEA
 ---
 
 *Formerly VERA, then TARA.*
+
+---
+
+<br>
+<div align="center">
+© Cursed Entertainment 2026
+</div>
+<br>
+<div align="center">
+<a href="https://cursed-entertainment.itch.io/" target="_blank">
+    <img src="https://github.com/CursedPrograms/cursedentertainment/raw/main/images/logos/logo-wide-grey.png"
+        alt="CursedEntertainment Logo" style="width:250px;">
+</a>
+</div>
+<br>
+<div align="center">
+  <a href="https://github.com/SynthWomb" target="_blank">
+    <img src="https://github.com/SynthWomb/synth.womb/blob/main/logos/synthwomb07.png" alt="SynthWomb" style="width:200px;"/>
+  </a>
+</div>
 
 ---
 

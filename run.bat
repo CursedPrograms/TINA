@@ -15,6 +15,8 @@ if errorlevel 1 (
     venv\Scripts\python.exe -m pip install -r requirements.txt || goto :fail
     copy /y requirements.txt "venv\requirements.installed" >nul
 )
+REM Her Piper voice (Voice in config.json), fetched once into voices\.
+venv\Scripts\python.exe -m tina.voice
 
 REM Open her page once the server has had a moment to start (not for --cli).
 if /i not "%~1"=="--cli" start "" /b cmd /c "timeout /t 4 /nobreak >nul & start http://127.0.0.1:5013/"
