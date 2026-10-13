@@ -352,11 +352,18 @@ def _speakable(text):
 
 
 def _heartbeat(cfg):
-    """Register with RIFT every 10 s like the robots do."""
+    """Register with RIFT every 10 s like the robots do. Says so when that starts or
+    stops working (a 404 means something else is on RIFT's port)."""
+    url, registered = f"http://{cfg['RiftHost']}:{cfg['RiftPort']}/register", None
     while True:
         try:
-            requests.post(f"http://{cfg['RiftHost']}:{cfg['RiftPort']}/register",
-                          data={"name": "TINA", "type": "agent", "capabilities": f"agent,web:{cfg['Port']},talk:{cfg['Port']},peer"}, timeout=2)
-        except requests.RequestException:
-            pass
+            r = requests.post(url, data={"name": "TINA", "type": "agent",
+                                         "capabilities": f"agent,web:{cfg['Port']},talk:{cfg['Port']},peer"}, timeout=2)
+            ok, why = r.ok, f"HTTP {r.status_code}"
+        except requests.RequestException as e:
+            ok, why = False, type(e).__name__
+        if ok != registered:
+            print(f"[TINA] Registered with RIFT at {url}" if ok else
+                  f"[TINA] Can't register with RIFT at {url} ({why}); retrying every 10 s", flush=True)
+            registered = ok
         time.sleep(10)
