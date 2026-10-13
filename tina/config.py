@@ -22,6 +22,8 @@ DEFAULTS = {
     "VoicePitch": 1.15,               # her Brainfuck beeps, relative to the phrasebook's tones
     "Voice": "en_GB-jenny_dioco-medium",   # her Piper voice (voices/<name>.onnx; run.bat fetches it)
     "Whisper": "base.en",             # her ears (faster-whisper on the CPU; tiny.en is quicker, small.en hears better)
+    "MusicFolder": "../NORA-Robot-v00/music",   # the fleet's songs, numbered as on NORA's SD card (relative to TINA)
+    "MusicLatency": 0.0,              # seconds her speakers lag, taken off so she starts in time with the others
 }
 
 

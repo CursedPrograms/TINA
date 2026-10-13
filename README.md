@@ -24,6 +24,7 @@ and the robots NORA, MILA, WHIP, IDA, KIDA and ARM.
 - **Reasoning switch** — her page shows every thought; the **reasoning** switch hides them when you only want the answers.
 - **Talks with the fleet** — she registers with RIFT as `talk` and `peer`. When nobody has used her for a couple of minutes, RIFT can pair her with DREAM or KIDA-01: rock paper scissors, then the winner picks words (her Piper voice) or Brainfuck (the fleet's phrasebook, beeped through the PC's speakers). Simple chirp conversations go the same way.
 - **Talks to the robots** — "say hello to NINA": she beeps a phrase from the fleet's Brainfuck phrasebook, the robot beeps its answer, and it lands in RIFT's mission log (`talk_to`).
+- **Plays music with the fleet** — when RIFT conducts (`POST /music` on RIFT), she starts the same song at the same moment as the others, on its own channel so her voice still gets through. Songs come from `NORA-Robot-v00/music`, numbered as on NORA's SD card.
 - **Fleet news from NINA** — NINA sends her everything she notices as it happens and a snapshot of the fleet every 30 s (`POST /fleet_news`), so TINA starts every job knowing who's up, who's slow and what went wrong lately.
 - **Don't interrupt** — while she's working she tells whoever asks, out loud ("I'm working right now. Please don't interrupt me.") or in Brainfuck, at most every three minutes, and says no.
 
@@ -58,6 +59,8 @@ python tina.py --cli "fix the compile error in MILA's ESP8266 sketch"
 | `Voice` | `en_GB-jenny_dioco-medium` | her [Piper voice](https://huggingface.co/rhasspy/piper-voices) |
 | `VoicePitch` | `1.15` | her Brainfuck beeps, relative to the phrasebook's tones |
 | `Whisper` | `base.en` | her ears (`tiny.en` is quicker, `small.en` hears better) |
+| `MusicFolder` | `../NORA-Robot-v00/music` | the fleet's songs, numbered as on NORA's SD card |
+| `MusicLatency` | `0.0` | seconds her speakers lag, taken off so she starts in time |
 
 ## Part of the DREAM Robotics fleet
 

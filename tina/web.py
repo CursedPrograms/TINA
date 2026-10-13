@@ -6,6 +6,8 @@ web.py - TINA's page (:5013) and her place in the fleet.
     GET  /task/<id>   the steps so far, a pending question if she's waiting on you, the answer
     POST /task/<id>/answer   {"yes": true|false}  - your reply to her question
     POST /task/<id>/stop
+    POST /music       RIFT conducts: {"action": "play" | "pause" | "resume" | "stop", "track", "at"} (music.py)
+    GET  /music       what she's playing, her offset to RIFT's clock, the tracks she has
     POST /fleet_news  NINA keeps her up to date: {"from", "event": {...}} or {"from", "snapshot": {...}}
     GET  /fleet_news  what she knows about the fleet right now
     POST /hear        a clip from the page's mic -> what Whisper heard, and the task if you said "Hey TINA"
@@ -38,6 +40,7 @@ from .llm import Ollama
 from .memory import Memory
 from .tools import Tools
 from .ears import Ears, wake
+from .music import Music
 from .voice import CACHE, Voice, phrasebook
 from . import peer_talk
 
@@ -96,6 +99,7 @@ def create_app(cfg):
     docs = DocIndex(cfg["Roots"], ROOT / "tina_index.json")
     voice = Voice(cfg)
     ears = Ears(cfg)
+    music = Music(cfg, voice)
     tasks = {}
     busy = threading.Lock()      # one task at a time: a 4B model on one GPU  (NOTE(move): could run more on the other PC)
     used = {"last": 0.0, "nagged": 0.0}
@@ -247,6 +251,17 @@ def create_app(cfg):
     def ping():
         return "TINA alive", 200, {"Content-Type": "text/plain"}
 
+    @app.route("/music", methods=["GET", "POST"])
+    def music_now():
+        """RIFT conducting the fleet's music (it doesn't need her model, so she plays along even while working)."""
+        if request.method == "GET":
+            return jsonify(music.status())
+        body = request.get_json(silent=True) or {}
+        track = body.get("track")
+        out = music.command(str(body.get("action", "")), int(track) if str(track).isdigit() else None,
+                            float(body["at"]) if isinstance(body.get("at"), (int, float)) else None)
+        return jsonify(out), 200 if out.get("ok") else 400
+
     @app.route("/fleet_news", methods=["GET", "POST"])
     def fleet_news():
         if request.method == "POST":
@@ -362,7 +377,7 @@ def _heartbeat(cfg):
     while True:
         try:
             r = requests.post(url, data={"name": "TINA", "type": "agent",
-                                         "capabilities": f"agent,web:{cfg['Port']},talk:{cfg['Port']},peer"}, timeout=2)
+                                         "capabilities": f"agent,web:{cfg['Port']},talk:{cfg['Port']},peer,music:{cfg['Port']}"}, timeout=2)
             ok, why = r.ok, f"HTTP {r.status_code}"
         except requests.RequestException as e:
             ok, why = False, type(e).__name__
