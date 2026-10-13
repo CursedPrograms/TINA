@@ -336,6 +336,8 @@ def fleet_briefing(fleet):
         if robots:
             lines.append("Robots: " + ", ".join(f"{name} {up(r.get('up'))}" + (f" {r['ms']} ms" if r.get("up") and r.get("ms") else "")
                                                 for name, r in sorted(robots.items())))
+        if snap.get("states"):
+            lines.append("How they say they are: " + "; ".join(f"{n}: {s}" for n, s in sorted(snap["states"].items())))
         if snap.get("ports"):
             lines.append("Serial ports: " + ", ".join(f"{k} {v}" for k, v in snap["ports"].items()))
     news = [e for e in fleet["news"] if time.time() - e.get("t", 0) < 3600][-8:]
