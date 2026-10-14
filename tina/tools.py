@@ -8,7 +8,8 @@ tools far better than many clever ones.
              robot's API, recall memories, whitelisted commands (git status,
              compile checks...), talking to a robot in Brainfuck
     logged   edit / write files inside her roots (AutoEdit; git can undo them)
-    ask      any other command, git commit / push, anything that drives a robot,
+    ask      any other command, git commit / push, anything that drives a robot
+             (tell_robot asks when RIFT says the action can move it),
              writing outside her roots
     never    deleting files: there is no tool for it
 """
@@ -227,6 +228,37 @@ class Tools:
             return "I can only talk to the robots from my page (python tina.py), not the terminal."
         return self.talk(robot, phrase)
 
+    def _relay(self, body):
+        try:
+            r = requests.post(f"http://{self.cfg['RiftHost']}:{self.cfg['RiftPort']}/talk", json=dict(body, **{"from": "TINA"}), timeout=15)
+            return r.json()
+        except (requests.RequestException, ValueError) as e:
+            return {"ok": False, "error": f"RIFT isn't answering: {e}"}
+
+    def ask_robot(self, robot):
+        return _cut(self._relay({"to": robot, "verb": "ask"}))
+
+    def tell_robot(self, robot, action, seconds=None, motor=None, angle=None):
+        body = {"to": robot, "verb": "do", "action": action}
+        for k, v in (("seconds", seconds), ("motor", motor), ("angle", angle)):
+            if v not in (None, ""):
+                body[k] = v
+        out = self._relay(body)
+        if out.get("needs") == "confirmed":     # RIFT says it can move the robot: a person decides
+            how_long = f" for {seconds} s" if seconds not in (None, "") else ""
+            if not self.ask(f"TINA wants {robot} to {action}{how_long} (this moves the robot). Allow?"):
+                return "The user said no."
+            out = self._relay(dict(body, confirmed=True))
+        if out.get("ok"):
+            self.log.append(f"told {robot} to {action}")
+        return _cut(out)
+
+    def drive_by_camera(self, robot, goal, steps=6):
+        from .drive import Driver           # stop, look, think, move (drive.py)
+        report = Driver(self.cfg, self._relay, self.ask).drive(robot, goal, steps)
+        self.log.append(f"drove {robot} by camera: {report.splitlines()[0]}")
+        return _cut(report)
+
     def robot_api(self, url, method="GET"):
         method = method.upper()
         if not re.match(r"https?://", url):
@@ -266,13 +298,19 @@ class Tools:
         "fleet_status": ("Which robots are online (RIFT) and what NINA has noticed lately.", {}),
         "talk_to": ("Say something to a robot or another program in the fleet (NINA, DREAM, KIDA, NORA...) in the fleet's Brainfuck language: you beep it, they beep their answer. Use this to greet or chat with them.",
                     {"robot": "its name, e.g. NINA", "phrase": "hello | how are you | happy | curious | sleepy | play | bye"}),
+        "ask_robot": ("Ask a robot how it is right now, through RIFT: its live status and the actions tell_robot can send it.", {"robot": "its name, e.g. NORA"}),
+        "tell_robot": ("Tell a robot to do one action, through RIFT (e.g. NORA music_stop). ask_robot lists what it can do. Anything that moves it asks the user; unlocking is never possible.",
+                       {"robot": "its name, e.g. NORA", "action": "e.g. music_stop, uv_on, stop, forward", "seconds": "for a drive: how long, max 3 (optional)",
+                        "motor": "ARM's joint: motor 1-6 (optional)", "angle": "ARM's joint: degrees (optional)"}),
+        "drive_by_camera": ("Drive a robot with a camera (KIDA01) toward a goal: it stops, you look through its camera with the vision model, pick one short move, repeat. Asks the user once; stops when unsure.",
+                            {"robot": "its name, e.g. KIDA01", "goal": "what to do, e.g. 'drive to the open floor without touching anything'", "steps": "most moves, default 6 (max 12)"}),
         "robot_api": ("Call a robot's HTTP API. GET to read; anything that moves it asks the user.", {"url": "full URL", "method": "GET (default) or POST"}),
         "search_docs": ("Search all READMEs, TODOs, code and configs in the repos by keywords.", {"query": "keywords"}),
         "remember": ("Save a lasting fact or decision to long-term memory.", {"fact": "one clear sentence"}),
         "recall": ("Look something up in long-term memory.", {"query": "what to look for"}),
     }
     REQUIRED = {"talk_to": ["robot"], "read_file": ["path"], "search_files": ["pattern"], "edit_file": ["path", "old", "new"], "write_file": ["path", "content"],
-                "run_command": ["command"], "compile_sketch": ["folder"], "robot_api": ["url"], "search_docs": ["query"],
+                "run_command": ["command"], "compile_sketch": ["folder"], "robot_api": ["url"], "ask_robot": ["robot"], "tell_robot": ["robot", "action"], "drive_by_camera": ["robot", "goal"], "search_docs": ["query"],
                 "remember": ["fact"], "recall": ["query"]}
 
     def schema(self):

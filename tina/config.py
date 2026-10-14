@@ -9,6 +9,7 @@ DEFAULTS = {
     "Port": 5013,
     "Model": "qwen3:4b",              # NOTE(move): meant for a bigger model once TINA moves to the other PC
     "OllamaUrl": "http://localhost:11434",
+    "VisionModel": "gemma3:4b-it-qat",    # her eyes when she drives a robot by its camera (drive.py); qwen3 can't see
     "Think": False,                   # qwen3's thinking mode plans better but is far slower here (NOTE(move): turn on there)
     "ContextTokens": 8192,
     "MaxSteps": 25,

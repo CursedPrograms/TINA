@@ -18,6 +18,9 @@ NAME = r"(?:tina|teena|tena|deena|tiina|tinna)"
 WAKE = re.compile(rf"^\W*(?:(?:hey|hi|hello|ok|okay|yo)\W+)?{NAME}\b\W*", re.I)
 WAKE_ANYWHERE = re.compile(rf"\b(?:hey|hi|ok|okay)\W+{NAME}\b\W*", re.I)
 NOISE = {"", "you", "thank you.", "thanks for watching!", "bye."}     # what Whisper makes of silence
+# The fleet's names, so Whisper writes "KIDA01" and "NORA", not "Kita zero one" and "Nora"
+# (Piper-spoken test, base.en: 4 of 5 names right with it, 1 without; small.en was no better, at twice the time).
+NAMES = "TINA, NORA, MILA, KIDA00, KIDA01, NINA, WHIP, IDA, ARM, DREAM, RIFT."
 
 
 class Ears:
@@ -43,8 +46,11 @@ class Ears:
             with os.fdopen(fd, "wb") as f:
                 f.write(data)
             with self._lock:
-                segments, _ = self._load().transcribe(path, language="en", beam_size=1, vad_filter=True)
+                segments, _ = self._load().transcribe(path, language="en", beam_size=1, vad_filter=True,
+                                                      initial_prompt=NAMES)
                 text = " ".join(s.text.strip() for s in segments).strip()
+            if NAMES.rstrip(".") in text:       # near-silence can echo the hint back
+                text = ""
             self.error = None
         except Exception as e:
             self.error = f"{type(e).__name__}: {e}"

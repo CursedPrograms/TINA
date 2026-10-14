@@ -60,3 +60,10 @@ textarea:focus { outline: none; border-color: var(--accent); }
 .meter span { display: block; height: 100%; width: 0; background: var(--ok); transition: width .05s linear; }
 .heard { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .said { color: var(--accent2); font-size: .75rem; }
+#newConvo { font-size: .72rem; padding: 6px 10px; letter-spacing: .05em; white-space: nowrap; }
+#newConvo .n { color: var(--accent); }
+.convo-break { display: flex; align-items: center; gap: 10px; margin: 4px 0 18px; color: var(--text-dim); font-size: .75rem; letter-spacing: .08em; }
+.convo-break::before, .convo-break::after { content: ''; flex: 1; border-top: 1px dashed var(--border); }
+.followup { color: var(--ok); font-size: .72rem; white-space: nowrap; }
+@media (max-width: 640px) { header { flex-wrap: wrap; } header .state { margin-left: 0; width: 100%; order: 5; } }
+#newConvo:disabled { opacity: .45; cursor: default; border-color: var(--border); }

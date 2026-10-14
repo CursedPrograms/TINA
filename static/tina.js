@@ -15,6 +15,7 @@ function render(ev) {
     case 'tool': return `<div class="ev tool">&rarr; ${esc(d.name)}(${esc(Object.entries(d.args).map(([k, v]) => k + '=' + JSON.stringify(v).slice(0, 80)).join(', '))})</div>`;
     case 'result': return `<div class="ev result">${esc(d.text)}</div>`;
     case 'memory': return `<div class="ev memory">remembers: ${d.map(esc).join(' &middot; ')}</div>`;
+    case 'context': return `<div class="ev memory">follows on from: ${d.map(esc).join(' &middot; ')}</div>`;
     case 'ask': return `<div class="ev tool">asked: ${esc(d)}</div>`;
     case 'answered': return `<div class="ev memory">you said ${esc(d)}</div>`;
     case 'error': return `<div class="ev error">${esc(d)}</div>`;
@@ -44,13 +45,35 @@ function poll(id, el, since, voiced = false) {
       ask.innerHTML = `<p>${esc(d.question)}</p><button class="yes" onclick="reply('${id}', true)">ALLOW</button> <button class="no" onclick="reply('${id}', false)">DENY</button>`;
     } else ask.style.display = 'none';
     el.querySelector('.st').textContent = d.status === 'running' ? 'working...' : d.status + (d.result ? ` · ${d.result.steps} steps · ${d.result.seconds}s` : '');
+    if (d.context && !el.querySelector('.followup'))
+      el.querySelector('.st').insertAdjacentHTML('beforebegin', `<span class="followup" title="She was given your last ${d.context} task(s) of this conversation">follow-up</span>`);
     if (d.status === 'running') setTimeout(() => poll(id, el, d.next, voiced), 800);
     else {
       el.querySelector('.head button').remove();
+      convoCount();
       if (voiced) voiceDone(d.result);     // a voice task: her final answer is spoken, never her reasoning
     }
   }).catch(() => setTimeout(() => poll(id, el, since, voiced), 2000));
 }
+
+// ---- the conversation: a new task sees your last few (follow-ups); NEW CONVERSATION forgets them
+const newConvo = document.getElementById('newConvo');
+function convoCount() {
+  fetch('/conversation').then(r => r.json()).then(c => {
+    const n = c.turns.length;
+    newConvo.innerHTML = 'NEW CONVERSATION' + (n ? ` <span class="n">${n}</span>` : '');
+    newConvo.disabled = !n;
+  }).catch(() => {});
+}
+newConvo.addEventListener('click', () => {
+  fetch('/conversation/new', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{"from": "page"}'}).then(() => {
+    document.getElementById('empty')?.remove();
+    if (!box.firstElementChild?.classList.contains('convo-break'))
+      box.insertAdjacentHTML('afterbegin', '<div class="convo-break">new conversation</div>');
+    convoCount();
+  });
+});
+convoCount();
 
 function reply(id, yes) { fetch(`/task/${id}/answer`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({yes})}); }
 function stopTask(id) { fetch(`/task/${id}/stop`, {method: 'POST'}); }

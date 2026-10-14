@@ -2,8 +2,13 @@
 web.py - TINA's page (:5013) and her place in the fleet.
 
     /                 her page: give her a task, watch each step, approve or deny
-    POST /task        {"task": "...", "voice": bool} -> {"id"}   voice: say the final answer (Piper)
-    GET  /task/<id>   the steps so far, a pending question if she's waiting on you, the answer
+    POST /task        {"task": "...", "voice": bool, "from": "DREAM", "fresh": bool} -> {"id"}
+                      voice: say the final answer (Piper). from: whose conversation it continues
+                      (default "page": her page and "Hey TINA"). fresh: start a new conversation
+    GET  /task/<id>   the steps so far, a pending question if she's waiting on you, the answer,
+                      and "context": how many earlier tasks of the conversation she was given
+    GET  /conversation?from=page        the conversation so far (what a follow-up sees)
+    POST /conversation/new {"from"}     forget it: the next task starts fresh
     POST /task/<id>/answer   {"yes": true|false}  - your reply to her question
     POST /task/<id>/stop
     POST /music       RIFT conducts: {"action": "play" | "pause" | "resume" | "stop", "track", "at"} (music.py)
@@ -56,13 +61,19 @@ FLEET_NEWS = 30        # NINA's latest notes she keeps
 FLEET_STALE_S = 120    # NINA's snapshot is old news after this
 PERSONA = ("the fleet's engineer: practical, precise and a little dry. You live on the PC, "
            "read and fix the other robots' code, and don't move.")
+CONVO_TURNS = 3        # a follow-up sees this many earlier tasks of its conversation (a 4B model, 8k context)
+CONVO_IDLE_S = 30 * 60 # quiet this long, and the next task starts a new conversation
+ANSWER_KEEP = 500      # characters of each earlier answer she's given
 
 
 class Task:
-    def __init__(self, text, voice=False):
+    def __init__(self, text, voice=False, who="page", fresh=False):
         self.id = uuid.uuid4().hex[:10]
         self.text = text
         self.voice = voice
+        self.who = who           # whose conversation this continues: "page" (her page, "Hey TINA"), "DREAM"...
+        self.fresh = fresh       # start a new conversation instead
+        self.context = 0         # earlier tasks she was given
         self.events = []
         self.status = "running"
         self.question = None
@@ -104,19 +115,35 @@ def create_app(cfg):
     busy = threading.Lock()      # one task at a time: a 4B model on one GPU  (NOTE(move): could run more on the other PC)
     used = {"last": 0.0, "nagged": 0.0}
     fleet = {"snapshot": None, "at": 0.0, "news": deque(maxlen=FLEET_NEWS)}    # from NINA
+    convos = {}                  # who -> {"turns": the last CONVO_TURNS tasks, "at": when the last one ended}
+
+    def conversation(who):
+        c = convos.setdefault(who, {"turns": deque(maxlen=CONVO_TURNS), "at": 0.0})
+        if c["turns"] and time.time() - c["at"] > CONVO_IDLE_S:
+            c["turns"].clear()   # a long pause: whatever comes next is a new conversation
+        return c
 
     def work(task):
-        with busy:
+        with busy:               # taken here, not when it was sent, so a queued follow-up sees the task before it
             used["last"] = time.time()
+            convo = conversation(task.who)
+            if task.fresh:
+                convo["turns"].clear()
+            history = list(convo["turns"])
+            task.context = len(history)
             tools = Tools(cfg, docs, memory, task.ask, talk_to)
             agent = Agent(llm, tools, memory, cfg["MaxSteps"])
             try:
-                result = agent.run(task.text, task.emit, task.stop, fleet_briefing(fleet))
+                result = agent.run(task.text, task.emit, task.stop, fleet_briefing(fleet), history)
                 if task.voice:           # only her final answer is spoken, never her reasoning
                     audio = voice.render(_speakable(result["answer"]))
                     result["audio"] = f"/voice/{audio.name}" if audio else None
                 task.result = result
                 task.status = "done"
+                if not task.stop.is_set() and not result["answer"].startswith("I couldn't reach my model"):
+                    convo["turns"].append({"task": task.text[:300], "answer": _brief(result["answer"]),
+                                           "files": result.get("files", [])[:8]})
+                    convo["at"] = time.time()
             except Exception as e:
                 task.emit("error", f"{type(e).__name__}: {e}")
                 task.status = "failed"
@@ -212,7 +239,7 @@ def create_app(cfg):
         text = str(body.get("task", "")).strip()
         if not text:
             return jsonify({"error": "empty task"}), 400
-        t = Task(text, bool(body.get("voice")))
+        t = Task(text, bool(body.get("voice")), str(body.get("from") or "page")[:24], bool(body.get("fresh")))
         tasks[t.id] = t
         threading.Thread(target=work, args=(t,), daemon=True, name=f"tina-{t.id}").start()
         return jsonify({"id": t.id})
@@ -224,7 +251,18 @@ def create_app(cfg):
             return jsonify({"error": "no such task"}), 404
         since = int(request.args.get("since", 0))
         return jsonify({"status": t.status, "events": t.events[since:], "next": len(t.events),
-                        "question": t.question, "result": t.result})
+                        "question": t.question, "result": t.result, "context": t.context})
+
+    @app.route("/conversation")
+    def get_conversation():
+        c = conversation(request.args.get("from", "page"))
+        return jsonify({"turns": list(c["turns"]), "idle_s": round(time.time() - c["at"]) if c["turns"] else None,
+                        "keeps": CONVO_TURNS, "new_after_s": CONVO_IDLE_S})
+
+    @app.route("/conversation/new", methods=["POST"])
+    def new_conversation():
+        conversation(str((request.get_json(silent=True) or {}).get("from") or "page"))["turns"].clear()
+        return jsonify({"ok": True})
 
     @app.route("/task/<tid>/answer", methods=["POST"])
     def answer(tid):
@@ -361,6 +399,13 @@ def fleet_briefing(fleet):
         lines += [f"- {time.strftime('%H:%M', time.localtime(e.get('t', 0)))} {e.get('level', '')}: {e.get('text', '')}"
                   + (f" ({e['why']})" if e.get("why") else "") for e in news]
     return "\n".join(lines)
+
+
+def _brief(answer):
+    """Her answer as a follow-up will see it: code left out, cut short (a small context window)."""
+    text = re.sub(r"```.*?```", " (code) ", answer or "", flags=re.S)
+    text = " ".join(text.split())
+    return text if len(text) <= ANSWER_KEEP else text[:ANSWER_KEEP].rsplit(" ", 1)[0] + " ..."
 
 
 def _speakable(text):

@@ -6,6 +6,11 @@ turn it either calls one tool or answers. Tool results go back in, trimmed so a
 small context window doesn't fill up with old output. When she's done she
 reports what she did and what she checked, and the gist goes to long-term
 memory so the next task starts knowing it.
+
+Follow-ups: each task can come with the conversation so far (web.py keeps the
+last few: what was asked, her answer, the files she touched), given to the model
+as earlier turns, so "and the other one?" means something. Only summaries: her
+old tool output isn't carried over, to keep a small context window free.
 """
 
 import json
@@ -34,6 +39,23 @@ Be brief. No markdown tables."""
 
 KEEP_FULL = 4          # the newest tool results stay whole; older ones are trimmed
 TRIM_TO = 400
+FILE_ARGS = {"read_file": "path", "edit_file": "path", "write_file": "path", "list_files": "path",
+             "search_files": "path", "compile_sketch": "folder"}     # the argument that names a file or folder
+
+FOLLOW_UP = """
+
+This task is part of a conversation: the earlier turns above are short summaries of what the user asked
+before and what you answered. Words like "it", "that file", "the other one" or "do the same for MILA"
+refer to them. They are only summaries: read a file again before you change it."""
+
+
+def _turns(history):
+    """The conversation so far as chat turns: the question, then her answer and the files she touched."""
+    out = []
+    for h in history:
+        files = f"\n(Files: {', '.join(h['files'])})" if h.get("files") else ""
+        out += [{"role": "user", "content": h["task"]}, {"role": "assistant", "content": h["answer"] + files}]
+    return out
 
 
 def _repos(roots):
@@ -83,18 +105,25 @@ class Agent:
             if len(c) > TRIM_TO:
                 messages[i]["content"] = c[:TRIM_TO] + " ... [older output trimmed]"
 
-    def run(self, task, emit=lambda kind, data: None, stop=None, fleet=""):
+    def run(self, task, emit=lambda kind, data: None, stop=None, fleet="", history=()):
         """Do the task. emit(kind, data) reports progress: plan/think, tool, result, answer, error.
-        fleet: what NINA last told her about the fleet (web.py's fleet_briefing)."""
+        fleet: what NINA last told her about the fleet (web.py's fleet_briefing).
+        history: the conversation so far, oldest first: [{"task", "answer", "files"}] (web.py keeps it)."""
         started = time.time()
-        recalled = self.memory.recall(task)
+        history = list(history)
+        # "and the other one?" alone finds nothing in memory: look it up with the last question too
+        recalled = self.memory.recall(f"{history[-1]['task']} {task}" if history else task)
         system = SYSTEM + _guide() + _repos(self.tools.roots)
         if fleet:
             system += "\n\nThe fleet right now, as NINA (the caretaker) last told you:\n" + fleet
         if recalled:
             system += "\n\nWhat you remember that may matter:\n" + "\n".join(f"- {m}" for m in recalled[:6])
             emit("memory", recalled[:6])
-        messages = [{"role": "system", "content": system}, {"role": "user", "content": task}]
+        if history:
+            system += FOLLOW_UP
+            emit("context", [h["task"] for h in history])
+        messages = [{"role": "system", "content": system}, *_turns(history), {"role": "user", "content": task}]
+        files = []                    # what she read, searched or changed: the next follow-up sees it
         tools = self.tools.schema()
         answer, steps = None, 0
         for steps in range(1, self.max_steps + 1):
@@ -130,6 +159,9 @@ class Agent:
                     except ValueError:
                         args = {}
                 emit("tool", {"name": name, "args": args})
+                where = args.get(FILE_ARGS.get(name, "")) if isinstance(args, dict) else None
+                if where and isinstance(where, str) and where not in files:
+                    files.append(where)
                 result = self.tools.call(name, args)
                 emit("result", {"name": name, "text": result})
                 messages.append({"role": "tool", "tool_name": name, "content": str(result)})
@@ -141,4 +173,5 @@ class Agent:
         if self.tools.log or len(task) > 20:   # what happened goes to long-term memory
             self.memory.retain(f"Task: {task[:300]}\nOutcome: {answer[:600]}\nChanges: {'; '.join(self.tools.log)[:400] or 'none'}",
                                context=f"TINA task, {time.strftime('%Y-%m-%d')}")
-        return {"answer": answer, "steps": steps, "changes": list(self.tools.log), "seconds": round(time.time() - started)}
+        return {"answer": answer, "steps": steps, "changes": list(self.tools.log), "files": files,
+                "seconds": round(time.time() - started)}
