@@ -4,3 +4,4 @@ hindsight-client
 pygame
 piper-tts
 faster-whisper
+pytest
