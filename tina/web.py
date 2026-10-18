@@ -40,6 +40,7 @@ from flask import Flask, jsonify, render_template, request, send_from_directory
 
 from .agent import Agent
 from .config import ROOT
+from .fleet_ladder import FleetLadder
 from .docs import DocIndex
 from .llm import Ollama
 from .memory import Memory
@@ -370,6 +371,9 @@ def create_app(cfg):
         voice.beep(code)
         return jsonify({"ok": True})
 
+    # The fleet's WiFi ladder (fleet_ladder.py, fleet TODO section 2): with FleetLadder on, TINA joins the
+    # highest fleet network above her, or hosts "TINA" and the fleet list when none is up.
+    cfg["_ladder"] = FleetLadder("TINA", enabled=cfg.get("FleetLadder", False)).start()
     threading.Thread(target=_heartbeat, args=(cfg,), daemon=True, name="rift-heartbeat").start()
     return app
 
@@ -418,8 +422,10 @@ def _speakable(text):
 def _heartbeat(cfg):
     """Register with RIFT every 10 s like the robots do. Says so when that starts or
     stops working (a 404 means something else is on RIFT's port)."""
-    url, registered = f"http://{cfg['RiftHost']}:{cfg['RiftPort']}/register", None
+    registered = None
     while True:
+        host = cfg["_ladder"].registry_host() if cfg.get("_ladder") else None   # whoever hosts, on the ladder
+        url = f"http://{host or cfg['RiftHost']}:{cfg['RiftPort']}/register"
         try:
             r = requests.post(url, data={"name": "TINA", "type": "agent",
                                          "capabilities": f"agent,web:{cfg['Port']},talk:{cfg['Port']},peer,music:{cfg['Port']}"}, timeout=2)
