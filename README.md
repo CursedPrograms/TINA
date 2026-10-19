@@ -1,3 +1,5 @@
+<p align="center"><img src="images/avatar_round.png" width="160" alt="TINA"></p>
+
 # TINA
 
 **Task Intelligence & Network Assistant** — the DREAM Robotics fleet's working agent.

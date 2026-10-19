@@ -1,8 +1,10 @@
 :root{
-  --bg:#0A0B0D; --panel:#121418; --border:#2A2E35; --divider:#1A1D22;
-  --text:#ECEAE6; --text-sec:#A5A29C; --text-dim:#66655F;
-  --accent:#F2A33A; --accent-hover:#F7C47A; --accent2:#3FA7D6; --steel:#C9D6DF;
-  --ok:#7FC8A9;
+  /* from colour_scheme.xml: her avatar's navy, golden hair, cyan skin and teal sparkles */
+  --bg:#0D141C; --panel:#15202B; --border:#26384A; --divider:#1B2835;
+  --text:#E8EEF2; --text-sec:#9FB0BD; --text-dim:#5E6F7C;
+  --accent:#E3D43A; --accent-hover:#F0E57A; --accent2:#2AA7C6; --steel:#36B8AF;
+  --ok:#56C59D;
+  --glow:227,212,58; --glow2:42,167,198;
   --mono:ui-monospace,"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;
   --sans:"Segoe UI",system-ui,-apple-system,sans-serif;
 }
@@ -13,7 +15,8 @@ a{color:var(--accent);text-decoration:none}
 a:hover{color:var(--accent-hover)}
 header{text-align:center;padding:76px 0 40px;position:relative;overflow:hidden}
 header::before{content:"";position:absolute;inset:-40% 0 auto 0;height:420px;z-index:0;
-  background:radial-gradient(60% 60% at 50% 0,rgba(242,163,58,.14),transparent 70%)}
+  background:radial-gradient(60% 60% at 50% 0,rgba(var(--glow),.14),transparent 70%),
+             radial-gradient(45% 50% at 78% 10%,rgba(var(--glow2),.12),transparent 70%)}
 header .wrap{position:relative;z-index:1}
 .eyebrow{font:600 12px var(--mono);letter-spacing:.32em;text-transform:uppercase;color:var(--accent)}
 h1{font:800 clamp(52px,12vw,104px)/1 var(--mono);letter-spacing:.12em;margin:10px 0 6px}
@@ -23,7 +26,7 @@ h1{font:800 clamp(52px,12vw,104px)/1 var(--mono);letter-spacing:.12em;margin:10p
 .btn{display:inline-block;padding:11px 20px;border:1px solid var(--border);border-radius:10px;
   font:600 14px var(--sans);color:var(--text)}
 .btn:hover{border-color:var(--accent);color:var(--accent)}
-.btn.primary{background:rgba(242,163,58,.12);border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:rgba(var(--glow),.12);border-color:var(--accent);color:var(--accent)}
 .tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:26px}
 .tag{font:12px var(--mono);color:var(--text-sec);background:var(--panel);
   border:1px solid var(--border);border-radius:999px;padding:5px 12px}
@@ -41,6 +44,15 @@ pre .c{color:var(--accent2)}
   border:1px solid var(--border);border-radius:8px;padding:5px 10px}
 footer{padding:36px 0 56px;text-align:center;color:var(--text-dim);font:12px var(--mono);border-top:1px solid var(--divider)}
 .lede-sm{color:var(--text-sec)}
+
+/* her avatar, as the robots' sites show theirs */
+.avatar{margin:40px auto 0;max-width:420px;background:var(--panel);border:1px solid rgba(var(--glow),.45);
+  border-radius:16px;overflow:hidden;box-shadow:0 0 70px rgba(var(--glow),.2)}
+.avatar img{display:block;width:100%;height:auto}
+.avatar figcaption{font:12px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--accent);padding:12px 16px}
+/* error pages (404 / 500): her face above the code */
+.face{display:block;width:168px;height:168px;margin:0 auto 24px;border-radius:50%;object-fit:cover;
+  border:2px solid rgba(var(--glow),.55);box-shadow:0 0 60px rgba(var(--glow),.22)}
 
 /* The DREAM Robotics ecosystem links (the DREAM-ECOSYSTEM block at the end of index.html) */
 section.eco { max-width: 880px; margin: 32px auto; padding: 18px 20px; border: 1px solid #2a2f3a; border-radius: 12px;

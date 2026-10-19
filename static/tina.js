@@ -240,3 +240,11 @@ function voiceDone(result) {
 
 if (!navigator.mediaDevices || !window.MediaRecorder) { mic.disabled = true; mic.title = "This browser can't record the mic"; }
 mic.addEventListener('click', () => { if (voiceOn) voiceStop(); else { voiceOn = true; voiceStart(); } });
+
+// Her avatar in the header: shown once it has loaded (hidden if the server has none)
+(function () {
+  const face = document.getElementById('face');
+  if (!face) return;
+  const show = () => { face.style.display = 'block'; };
+  if (face.complete && face.naturalWidth) show(); else face.addEventListener('load', show);
+})();
