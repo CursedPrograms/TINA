@@ -20,7 +20,7 @@ header::before{content:"";position:absolute;inset:-40% 0 auto 0;height:420px;z-i
 header .wrap{position:relative;z-index:1}
 .eyebrow{font:600 12px var(--mono);letter-spacing:.32em;text-transform:uppercase;color:var(--accent)}
 h1{font:800 clamp(52px,12vw,104px)/1 var(--mono);letter-spacing:.12em;margin:10px 0 6px}
-.tagline{font:500 clamp(15px,3.3vw,20px) var(--sans);color:var(--steel);letter-spacing:.02em}
+.tagline { font-size: clamp(15px, 2.6vw, 20px); color: var(--text); letter-spacing: .28em; text-transform: uppercase; margin: 0 0 28px; }
 .lede{max-width:620px;margin:20px auto 0;color:var(--text-sec)}
 .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:26px}
 .btn{display:inline-block;padding:11px 20px;border:1px solid var(--border);border-radius:10px;
