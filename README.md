@@ -94,6 +94,10 @@ DREAM · RIFT · NINA · NORA · MILA · WHIP · IDA · KIDA · ARM · LYCEA
   </a>
 </div>
 
+<div align="center">
+  <img src="images/screenshots/dashboard.png" alt="TINA's page" width="640"/>
+</div>
+
 ## Related Projects
 
 - [ARIA-Robot-v00](https://github.com/CursedPrograms/ARIA-Robot-v00)
