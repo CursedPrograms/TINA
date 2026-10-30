@@ -30,6 +30,8 @@ and the robots NORA, MILA, WHIP, IDA, KIDA and ARM.
 
 ---
 
+**Same conversation everywhere:** her jobs live on her server, so the Windows app, a browser and a phone all show the same ones.
+
 ## Related Projects
 
 
