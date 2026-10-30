@@ -24,17 +24,35 @@ function render(ev) {
   return '';
 }
 
+const shown = new Set();    // the jobs this window is showing
+let starting = 0;           // sent, id not back yet: sync() waits, or it would draw them twice
+
+function show(id, text, voice = false) {
+  shown.add(id);
+  document.getElementById('empty')?.remove();
+  const el = document.createElement('section');
+  el.className = 'task';
+  el.innerHTML = `<div class="head"><b>${voice ? '<span class="said">said</span> ' : ''}${esc(text)}</b><span class="st">working...</span><button onclick="stopTask('${id}')">STOP</button></div><div class="evs"></div><div class="ask" style="display:none"></div>`;
+  box.prepend(el);
+  poll(id, el, 0, voice);
+}
+
 function start(text, voice = false) {
   document.getElementById('empty')?.remove();
+  starting++;
   fetch('/task', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({task: text, voice})})
-    .then(r => r.json()).then(({id}) => {
-      const el = document.createElement('section');
-      el.className = 'task';
-      el.innerHTML = `<div class="head"><b>${voice ? '<span class="said">said</span> ' : ''}${esc(text)}</b><span class="st">working...</span><button onclick="stopTask('${id}')">STOP</button></div><div class="evs"></div><div class="ask" style="display:none"></div>`;
-      box.prepend(el);
-      poll(id, el, 0, voice);
-    });
+    .then(r => r.json()).then(({id}) => show(id, text, voice))
+    .finally(() => starting--);
 }
+
+// Her jobs live on her server, so every window (the exe, a browser, a phone) shows the same ones
+function sync() {
+  if (starting) return;
+  fetch('/status').then(r => r.json()).then(s => {
+    if (!starting) (s.tasks || []).forEach(j => shown.has(j.id) || show(j.id, j.task));
+  }).catch(() => {});
+}
+sync(); setInterval(sync, 2000);
 
 function poll(id, el, since, voiced = false) {
   fetch(`/task/${id}?since=${since}`).then(r => r.json()).then(d => {

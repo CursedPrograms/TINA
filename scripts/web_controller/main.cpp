@@ -159,7 +159,7 @@ static bool startingServer()
         startTries = START_TRIES;
     }
     startTries--;
-    showConnect(L"Starting " + std::wstring(ROBOT_NAME) + L"...");
+    showConnect(L"Starting " + std::wstring(ROBOT_NAME) + L" on this PC...");
     SetTimer(window, 1, START_WAIT_MS, nullptr);
     return true;
 }
@@ -241,7 +241,10 @@ static void find()
 {
     std::thread([] {
         std::string ip;
-        for (const std::wstring &gateway : gateways()) {
+#ifdef ROBOT_START
+        if (!httpGet(L"127.0.0.1", ROBOT_PORT, ROBOT_PATH).empty()) ip = "127.0.0.1";   // it runs on this PC
+#endif
+        for (const std::wstring &gateway : ip.empty() ? gateways() : std::vector<std::wstring>()) {
             std::string list = httpGet(gateway, 5000, L"/fleet");
             if (list.empty()) list = httpGet(gateway, 5000, L"/robots");
             ip = robotIn(list);

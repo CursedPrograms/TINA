@@ -1,4 +1,4 @@
-#define ROBOT_START 1   // she runs on this PC: start run.bat if she isn't up
+#define ROBOT_START 1   // runs on this PC: start run.bat if it isn't up
 // TINA's controller window: the page it opens and the colours for the connect page
 #pragma once
 
