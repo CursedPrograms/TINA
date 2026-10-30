@@ -10,6 +10,28 @@ compiles and checks its own work, and reports back plainly. She is the *engineer
 of the fleet, alongside DREAM (the companion), RIFT (the hub) and NINA (the caretaker),
 and the robots NORA, MILA, WHIP, IDA, KIDA and ARM.
 
+---
+
+**Windows app:** [`builds/TINA-Controller.exe`](builds/TINA-Controller.exe) opens TINA's page in a window and starts `run.bat` if she isn't running. Keep it in `builds/`. Source: `scripts/web_controller`.
+
+## Related Projects
+
+- [ARIA-Robot-v00](https://github.com/CursedPrograms/ARIA-Robot-v00)
+- [KIDA-Robot-v01](https://github.com/CursedPrograms/KIDA-Robot-v01)
+- [KIDA-Robot-v00](https://github.com/CursedPrograms/KIDA-Robot-v00)
+- [WHIP-Robot-v00](https://github.com/CursedPrograms/WHIP-Robot-v00)
+- [NORA-Robot-v00](https://github.com/CursedPrograms/NORA-Robot-v00)
+- [MILA-Robot-v00](https://github.com/CursedPrograms/MILA-Robot-v00)
+- [NIKA-Robot-v00](https://github.com/CursedPrograms/NIKA-Robot-v00)
+- [IDA-Robot-v00](https://github.com/CursedPrograms/IDA-Robot-v00)
+- [ARM-Robot-v01](https://github.com/CursedPrograms/ARM-Robot-v01)
+- [DREAM](https://github.com/CursedPrograms/DREAM)
+- [RIFT](https://github.com/CursedPrograms/RIFT)
+- [RITA](https://github.com/CursedPrograms/RITA)
+- [NINA](https://github.com/CursedPrograms/NINA)
+
+---
+
 ## What she does
 
 - **Plans, then acts one step at a time** — read/search first, edit small, check the result before the next step.
@@ -66,16 +88,6 @@ python tina.py --cli "fix the compile error in MILA's ESP8266 sketch"
 | `MusicFolder` | `../NORA-Robot-v00/music` | the fleet's songs, numbered as on NORA's SD card |
 | `MusicLatency` | `0.0` | seconds her speakers lag, taken off so she starts in time |
 
-## Part of the DREAM Robotics fleet
-
-DREAM · RIFT · NINA · NORA · MILA · WHIP · IDA · KIDA · ARM · LYCEA
-
----
-
-*Formerly VERA, then TARA.*
-
----
-
 <br>
 <div align="center">
 © Cursed Entertainment 2026
@@ -93,28 +105,6 @@ DREAM · RIFT · NINA · NORA · MILA · WHIP · IDA · KIDA · ARM · LYCEA
     <img src="https://github.com/SynthWomb/synth.womb/blob/main/logos/synthwomb07.png" alt="SynthWomb" style="width:200px;"/>
   </a>
 </div>
-
-<div align="center">
-  <img src="images/screenshots/dashboard.png" alt="TINA's page" width="640"/>
-</div>
-
-## Related Projects
-
-- [ARIA-Robot-v00](https://github.com/CursedPrograms/ARIA-Robot-v00)
-- [KIDA-Robot-v01](https://github.com/CursedPrograms/KIDA-Robot-v01)
-- [KIDA-Robot-v00](https://github.com/CursedPrograms/KIDA-Robot-v00)
-- [WHIP-Robot-v00](https://github.com/CursedPrograms/WHIP-Robot-v00)
-- [NORA-Robot-v00](https://github.com/CursedPrograms/NORA-Robot-v00)
-- [MILA-Robot-v00](https://github.com/CursedPrograms/MILA-Robot-v00)
-- [NIKA-Robot-v00](https://github.com/CursedPrograms/NIKA-Robot-v00)
-- [IDA-Robot-v00](https://github.com/CursedPrograms/IDA-Robot-v00)
-- [ARM-Robot-v01](https://github.com/CursedPrograms/ARM-Robot-v01)
-- [DREAM](https://github.com/CursedPrograms/DREAM)
-- [RIFT](https://github.com/CursedPrograms/RIFT)
-- [RITA](https://github.com/CursedPrograms/RITA)
-- [NINA](https://github.com/CursedPrograms/NINA)
-
----
 
 <!-- DREAM-ECOSYSTEM:START -->
 ## The DREAM Robotics ecosystem

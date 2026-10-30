@@ -9,3 +9,7 @@ config.json.bak
 hindsight-data/
 voices/
 voice_cache/
+
+# Controllers, built and kept
+!builds/
+!builds/*.exe
