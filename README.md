@@ -1,8 +1,22 @@
 <p align="center"><img src="images/avatar_round.png" width="160" alt="TINA"></p>
 
-# TINA
+<h1 align="center">TINA</h1>
+<h3 align="center">Task Intelligence & Network Assistant</h3>
+<p align="center"><i>A DREAM Robotics Engineer</i></p>
 
-**Task Intelligence & Network Assistant** — the DREAM Robotics fleet's working agent.
+<div align="center">
+
+
+
+</div>
+
+<div align="center">
+  <a href="https://ko-fi.com/cursedentertainment">
+    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="ko-fi" width="180"/>
+  </a>
+</div>
+
+---
 
 TINA is a local LLM agent (Ollama) that does real work across the fleet's repos:
 reads and searches code, makes small edits in the style of the surrounding code,
@@ -14,7 +28,10 @@ and the robots NORA, MILA, WHIP, IDA, KIDA and ARM.
 
 **Windows app:** [`builds/TINA-Controller.exe`](builds/TINA-Controller.exe) opens TINA's page in a window and starts `run.bat` if she isn't running. Keep it in `builds/`. Source: `scripts/web_controller`.
 
+---
+
 ## Related Projects
+
 
 <table>
   <tr>
@@ -47,6 +64,23 @@ and the robots NORA, MILA, WHIP, IDA, KIDA and ARM.
 - **Knows the fleet** — `fleet_guide.md` (who's who, their hardware, where each robot's code is), the list of repos, NINA's latest news and how each robot says it is go into her prompt, so "MILA" leads her straight to `MILA-Robot-v00`. What's true now is kept apart from old news.
 - **Searches before reading** — she finds a part in a repo with a search, then reads around the hits instead of whole files.
 
+---
+
+## Run
+
+```bat
+run.bat
+```
+
+This sets up the environment and starts her web UI on <http://127.0.0.1:5013/>.
+
+```bat
+python tina.py --cli                              talk to her in the terminal (asks before risky steps)
+python tina.py --cli "fix the compile error in MILA's ESP8266 sketch"
+```
+
+---
+
 ## Talking with her
 
 - **Voice chat** — press **MIC** on her page and say **"Hey TINA"**: "Hey TINA, which robots are online?" is a task straight away; "Hey TINA" on its own gets a "Yes?" and she listens. Her own Whisper (faster-whisper, on the CPU) hears you; she answers out loud in her Piper voice, and for a few seconds after you can carry on without her name. Only her final answer is spoken, never her reasoning.
@@ -62,18 +96,7 @@ and the robots NORA, MILA, WHIP, IDA, KIDA and ARM.
 
 Her lines are rendered once and cached in `voice_cache/` (mp3 with ffmpeg, wav without). `run.bat` fetches her voice into `voices/` the first time.
 
-## Run
-
-```bat
-run.bat
-```
-
-This sets up the environment and starts her web UI on <http://127.0.0.1:5013/>.
-
-```bat
-python tina.py --cli                              talk to her in the terminal (asks before risky steps)
-python tina.py --cli "fix the compile error in MILA's ESP8266 sketch"
-```
+---
 
 ## Configuration
 
@@ -94,23 +117,23 @@ python tina.py --cli "fix the compile error in MILA's ESP8266 sketch"
 | `MusicFolder` | `../NORA-Robot-v00/music` | the fleet's songs, numbered as on NORA's SD card |
 | `MusicLatency` | `0.0` | seconds her speakers lag, taken off so she starts in time |
 
-<br>
+---
+
+<div align="center">&copy; Cursed Entertainment 2026</div>
+
 <div align="center">
-© Cursed Entertainment 2026
-</div>
-<br>
-<div align="center">
-<a href="https://cursed-entertainment.itch.io/" target="_blank">
-    <img src="https://github.com/CursedPrograms/cursedentertainment/raw/main/images/logos/logo-wide-grey.png"
-        alt="CursedEntertainment Logo" style="width:250px;">
-</a>
-</div>
-<br>
-<div align="center">
-  <a href="https://github.com/SynthWomb" target="_blank">
-    <img src="https://github.com/SynthWomb/synth.womb/blob/main/logos/synthwomb07.png" alt="SynthWomb" style="width:200px;"/>
+  <a href="https://cursed-entertainment.itch.io/">
+    <img src="https://github.com/CursedPrograms/cursedentertainment/raw/main/images/logos/logo-wide-grey.png" alt="Cursed Entertainment" width="250"/>
   </a>
 </div>
+
+<div align="center">
+  <a href="https://github.com/SynthWomb">
+    <img src="https://github.com/SynthWomb/synth.womb/blob/main/logos/synthwomb07.png?raw=true" alt="SynthWomb" width="200"/>
+  </a>
+</div>
+
+---
 
 <!-- DREAM-ECOSYSTEM:START -->
 ## The DREAM Robotics ecosystem
