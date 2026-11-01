@@ -1,3 +1,5 @@
+import pytest
+
 """tools.py: ask_robot / tell_robot through a fake RIFT. Anything that moves a robot asks the user."""
 from tina.tools import Tools
 
@@ -60,3 +62,23 @@ def test_drive_by_camera_is_a_tool(cfg):
     t, _ = tools(cfg, [])
     assert "drive_by_camera" in t.SPECS and t.REQUIRED["drive_by_camera"] == ["robot", "goal"]
     assert any(s["function"]["name"] == "drive_by_camera" for s in t.schema())
+
+
+@pytest.mark.parametrize("url,asks", [
+    ("http://10.0.0.5:5002/sensors", False),
+    ("http://10.0.0.5:5002/status/", False),
+    ("http://10.0.0.5:5005/web?cmd=forward", True),   # WHIP walks
+    ("http://10.0.0.5/cmd?v=F", True),                # MILA drives
+    ("http://10.0.0.5:5002/drive?x=1", True),         # NORA
+    ("http://10.0.0.5:5002/fw", True),
+    ("http://10.0.0.5:5002/unlock", True),
+    ("http://10.0.0.5:5004/status?ctl=1", True),      # a controller taking over
+])
+def test_only_plain_looks_skip_the_question(url, asks, monkeypatch):
+    from tina import tools as tools_mod
+    asked = []
+    t = tools_mod.Tools.__new__(tools_mod.Tools)
+    t.ask = lambda q: asked.append(q) or False
+    monkeypatch.setattr(tools_mod.requests, "request", lambda *a, **k: type("R", (), {"status_code": 200, "text": "ok"})())
+    out = t.robot_api(url)
+    assert bool(asked) is asks and (out == "The user said no." if asks else out.startswith("200"))

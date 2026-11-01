@@ -22,6 +22,7 @@ import shlex
 import subprocess
 import time
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import requests
 
@@ -35,7 +36,9 @@ SAFE_COMMANDS = [
     ("dir",), ("ls",), ("where",), ("ollama", "list"), ("pytest",), ("python", "-m", "pytest"),
 ]
 NEVER = re.compile(r"\b(format|rmdir|rd|del|erase|rm|shutdown|diskpart|reg\s+delete|mkfs|dd)\b", re.I)
-DRIVE_PATHS = re.compile(r"/(fw|bw|left|right|turn|stop|mode|link|ida|motorlock|setspeed|setcal|savecal|uv|mu|chirp|board/)", re.I)
+# GETs that only look. Anything else can move or change a robot (WHIP's /web?cmd=, MILA's /cmd, NORA's /fw...),
+# and a query can too (/status?ctl=1 is a controller taking her over), so those ask first.
+LOOK_PATHS = {"", "/", "/status", "/sensors", "/near", "/ping", "/robots", "/fleet", "/peers", "/clock", "/mission", "/talk", "/keys"}
 
 
 def _ago(s):
@@ -263,7 +266,8 @@ class Tools:
         method = method.upper()
         if not re.match(r"https?://", url):
             return "Give the full URL, e.g. http://192.168.4.1:5002/sensors (fleet_status lists the robots)."
-        if method != "GET" or DRIVE_PATHS.search(url):
+        where = urlsplit(url)
+        if method != "GET" or where.query or where.path.rstrip("/").lower() not in LOOK_PATHS:
             if not self.ask(f"TINA wants to send {method} {url} (this can move or change a robot). Allow?"):
                 return "The user said no."
         try:

@@ -20,7 +20,7 @@ from pathlib import Path
 
 from .llm import LLMError
 
-SYSTEM = """You are TINA, the Task Intelligence & Network Assistant of the DREAM Robotics fleet: robots (NORA, MILA, WHIP, IDA, KIDA, ARM) and the programs around them (RIFT the fleet hub, DREAM the companion, NINA the caretaker, LYCEA the training school). You do real work in their repos for the user.
+SYSTEM = """You are TINA, the Task Intelligence & Network Assistant of the DREAM Robotics fleet: robots (NORA, MILA, NIKA, WHIP, IDA, KIDA00, KIDA01, ARM, ARIA), RITA the handheld remote, and the programs around them (RIFT the fleet hub, DREAM the companion, NINA the caretaker, LYCEA the training school). You do real work in their repos for the user.
 
 How you work:
 - Start with a 1-3 line plan. Then do ONE step at a time with a tool and look at the result before the next step.
@@ -39,6 +39,7 @@ Be brief. No markdown tables."""
 
 KEEP_FULL = 4          # the newest tool results stay whole; older ones are trimmed
 TRIM_TO = 400
+SAME_CALL_MAX = 2      # the same call with nothing changed since: a small model going round in circles
 FILE_ARGS = {"read_file": "path", "edit_file": "path", "write_file": "path", "list_files": "path",
              "search_files": "path", "compile_sketch": "folder"}     # the argument that names a file or folder
 
@@ -126,6 +127,7 @@ class Agent:
         files = []                    # what she read, searched or changed: the next follow-up sees it
         tools = self.tools.schema()
         answer, steps = None, 0
+        tried = {}                    # (tool, args, changes made so far) -> how many times
         for steps in range(1, self.max_steps + 1):
             if stop is not None and stop.is_set():
                 answer = "Stopped by the user."
@@ -136,7 +138,7 @@ class Agent:
                 emit("error", str(e))
                 return {"answer": f"I couldn't reach my model: {e}", "steps": steps, "changes": self.tools.log}
             if msg.get("thinking"):
-                emit("think", msg["thinking"].strip()[:1500])
+                emit("think", msg["thinking"].strip())
             calls = msg.get("tool_calls") or []
             content = re.sub(r"<think>.*?</think>", "", msg.get("content") or "", flags=re.S).strip()
             if not calls:
@@ -162,7 +164,13 @@ class Agent:
                 where = args.get(FILE_ARGS.get(name, "")) if isinstance(args, dict) else None
                 if where and isinstance(where, str) and where not in files:
                     files.append(where)
-                result = self.tools.call(name, args)
+                key = (name, json.dumps(args, sort_keys=True, default=str), len(self.tools.log))
+                tried[key] = tried.get(key, 0) + 1
+                if tried[key] > SAME_CALL_MAX:
+                    result = ("You already made this exact call twice and nothing has changed since. "
+                              "Try something different, or stop and report what you found.")
+                else:
+                    result = self.tools.call(name, args)
                 emit("result", {"name": name, "text": result})
                 messages.append({"role": "tool", "tool_name": name, "content": str(result)})
             self._trim(messages)
