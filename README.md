@@ -110,6 +110,7 @@ Her lines are rendered once and cached in `voice_cache/` (mp3 with ffmpeg, wav w
 | Key | Default | Meaning |
 |---|---|---|
 | `Model` | `qwen3:4b` | Ollama model |
+| `PeerModel` | `qwen3:4b-instruct-2507-q4_K_M` | The model for her chats with the other robots (RIFT's peer conversations): one that just answers. With thinking off, `qwen3:4b` narrates the prompt instead ("the user wants me to roleplay as TINA..."). Not pulled: she uses `Model`. Her own work keeps `Model` and its visible thinking |
 | `OllamaUrl` | `http://localhost:11434` | Ollama endpoint |
 | `Port` | `5013` | her web UI |
 | `ContextTokens` | `4096` | context window |

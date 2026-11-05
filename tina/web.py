@@ -243,13 +243,24 @@ def create_app(cfg):
             nag(brainfuck=random.random() < 0.35)     # mostly out loud, sometimes in their own language
         return ok, why
 
+    # Her chats with the other robots (RIFT's peer conversations) use a model that just answers: qwen3:4b with
+    # thinking switched off narrates the prompt instead ("Okay, the user wants me to roleplay as TINA...") and she
+    # said that out loud. Her own work keeps her thinking model (Model), thinking visible on her page.
+    META = re.compile(r"^\s*(okay|ok|alright|first|hmm)?[,.]?\s*(the user|i need to|i should|we are (in|tina)|as tina|let me|i must)", re.I)
+
     def peer_generate(prompt, **kw):
         options = {"temperature": kw.get("temperature", 0.7), "num_predict": kw.get("num_predict", 70)}
         if kw.get("stop"):
             options["stop"] = kw["stop"]
-        r = requests.post(f"{cfg['OllamaUrl'].rstrip('/')}/api/generate", timeout=kw.get("timeout", 90),
-                          json={"model": cfg["Model"], "prompt": prompt, "stream": False, "think": False, "options": options})
-        return r.json().get("response", "")
+        url = f"{cfg['OllamaUrl'].rstrip('/')}/api/generate"
+        for model in dict.fromkeys([cfg.get("PeerModel") or cfg["Model"], cfg["Model"]]):   # PeerModel not pulled: her own
+            r = requests.post(url, timeout=kw.get("timeout", 90),
+                              json={"model": model, "prompt": prompt, "stream": False, "think": False, "options": options})
+            if r.status_code == 404:
+                continue
+            text = r.json().get("response", "")
+            return "" if META.match(text) else text      # never say the reasoning out loud: peer_talk has a fallback line
+        return ""
 
     peer = peer_talk.PeerTalk(
         "TINA", PERSONA, None, peer_generate,
