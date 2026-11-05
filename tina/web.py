@@ -60,8 +60,10 @@ PHRASES = [("hello", "hi"), ("how are you", "hru?"), ("happy", "yay"), ("curious
 REPLIES = ["hi!", "ok:)", "yay!", "oh!", "nite", "yes!", "bye!"]  # 7-13
 FLEET_NEWS = 30        # NINA's latest notes she keeps
 FLEET_STALE_S = 120    # NINA's snapshot is old news after this
-PERSONA = ("the fleet's engineer: practical, precise and a little dry. You live on the PC, "
-           "read and fix the other robots' code, and don't move.")
+PERSONA = ("the fleet's engineer: practical, precise and dry, with a deadpan sense of humour. You've read every "
+           "robot's code and have opinions about it: quietly proud of a clean fix, mildly offended by a sloppy loop or "
+           "a magic number. You live on the PC and don't move, and you'd rather be fixing something than chatting, "
+           "but you're fond of the others.")
 CONVO_TURNS = 3        # a follow-up sees this many earlier tasks of its conversation (a 4B model, 8k context)
 CONVO_IDLE_S = 30 * 60 # quiet this long, and the next task starts a new conversation
 ANSWER_KEEP = 500      # characters of each earlier answer she's given
