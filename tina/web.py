@@ -156,6 +156,8 @@ def create_app(cfg):
         if robot.strip().upper() == "TINA":
             return "That's you - you can't talk to yourself. Talk to another robot, e.g. NINA."
         words = phrase.lower().strip(" .!?")
+        if words.startswith("weather") or words in ("wx", "forecast", "the weather"):
+            return ask_weather(robot)
         u = next((i for i, (name, text) in enumerate(PHRASES) if words in (name, text) or name.startswith(words) or words.startswith(name)), None)
         if u is None:
             return f"I can only say: {', '.join(n for n, _ in PHRASES)}."
@@ -185,6 +187,35 @@ def create_app(cfg):
         except requests.RequestException:
             pass
         return f'You beeped "{said}" to {who["name"]} in Brainfuck. ' + (f'{who["name"]} beeped back "{reply}".' if answered else f"{who['name']} didn't answer (busy or offline).")
+
+    def ask_weather(robot):
+        """"weather": she beeps "wx?" (utterance 17), the weather station (AURA, "ask:" in RIFT's list)
+        beeps the sky back in one word (18-25), and says the rest in words."""
+        rift = f"http://{cfg['RiftHost']}:{cfg['RiftPort']}"
+        try:
+            roster = requests.get(f"{rift}/fleet", timeout=12).json()["robots"]
+        except (requests.RequestException, ValueError, KeyError):
+            return "RIFT isn't answering, so I can't find AURA."
+        who = next((r for r in roster if r.get("name", "").upper() == robot.upper()), None)
+        port = next((c[4:] for c in (who or {}).get("capabilities", []) if str(c).startswith("ask:")), None)
+        if not who or not port:
+            stations = [r["name"] for r in roster if any(str(c).startswith("ask:") for c in r.get("capabilities", []))]
+            return (f"{robot} doesn't answer the weather. " +
+                    (f"Ask {', '.join(stations)} (the weather station)." if stations else "AURA, the weather station, isn't running."))
+        code = voice.code(17)
+        if code:
+            voice.beep(code, wait=True)
+        try:
+            a = requests.get(f"http://{who['ip']}:{port}/ask", params={"q": "weather", "chirp": "1"}, timeout=10).json()
+        except (requests.RequestException, ValueError):
+            return f'You beeped "wx?" to {who["name"]}, but she did not answer.'
+        word = (a.get("bf") or {}).get("text", "?")
+        line = f'TINA asked {who["name"]} "wx?" and {who["name"]} beeped back "{word}".'
+        try:
+            requests.post(f"{rift}/mission", json={"who": "TINA", "text": line}, timeout=2)
+        except requests.RequestException:
+            pass
+        return f'You beeped "wx?" to {who["name"]} in Brainfuck. She beeped back "{word}" and says: {a.get("answer", "")}'
 
     def available():
         """(free?, why): the robots may talk to her only when you're not using her."""
