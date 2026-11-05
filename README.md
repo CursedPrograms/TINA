@@ -32,8 +32,9 @@ and the robots NORA, MILA, WHIP, IDA, KIDA and ARM.
 
 **Same conversation everywhere:** her jobs live on her server, so the Windows app, a browser and a phone all show the same ones.
 
-## Related Projects
+---
 
+## Related Projects
 
 <table>
   <tr>
@@ -57,18 +58,20 @@ and the robots NORA, MILA, WHIP, IDA, KIDA and ARM.
 
 ---
 
-## What she does
+## Overview
+
+**Website: <https://cursedprograms.github.io/TINA/>**
 
 - **Plans, then acts one step at a time** — read/search first, edit small, check the result before the next step.
 - **Checks her work** — compiles or re-reads files; never claims something works unless she verified it.
-- **Remembers** — long-term memory via the shared **Hindsight** server (memory bank `tina`), so decisions and context carry across sessions.
+- **Remembers** — long-term memory on the fleet's **Hindsight** server, which DREAM hosts (memory bank `tina`), so decisions and context carry across sessions. Her `recall` tool can also read DREAM's, NINA's and RIFT's banks. If the server is away, memories wait in `memory_pending.jsonl` and are sent when it's back ([how it works](https://github.com/CursedPrograms/DREAM#the-fleets-memory-hindsight)).
 - **Stays in her lane** — if something fails twice she stops and explains instead of looping, and sticks to the job you gave her.
 - **Knows the fleet** — `fleet_guide.md` (who's who, their hardware, where each robot's code is), the list of repos, NINA's latest news and how each robot says it is go into her prompt, so "MILA" leads her straight to `MILA-Robot-v00`. What's true now is kept apart from old news.
 - **Searches before reading** — she finds a part in a repo with a search, then reads around the hits instead of whole files.
 
 ---
 
-## Run
+## Quick start
 
 ```bat
 run.bat
@@ -110,7 +113,7 @@ Her lines are rendered once and cached in `voice_cache/` (mp3 with ffmpeg, wav w
 | `OllamaUrl` | `http://localhost:11434` | Ollama endpoint |
 | `Port` | `5013` | her web UI |
 | `ContextTokens` | `4096` | context window |
-| `HindsightUrl` | `http://localhost:8888` | shared memory server (DREAM hosts it) |
+| `HindsightUrl` | `auto` | the fleet's memory server: `auto` finds DREAM's through RIFT, or give an address (`http://<DREAM's PC>:8888`) |
 | `MemoryBank` | `tina` | her bank in Hindsight |
 | `Roots` | `[".."]` | the repos she works in |
 | `Voice` | `en_GB-jenny_dioco-medium` | her [Piper voice](https://huggingface.co/rhasspy/piper-voices) |
@@ -118,6 +121,18 @@ Her lines are rendered once and cached in `voice_cache/` (mp3 with ffmpeg, wav w
 | `Whisper` | `base.en` | her ears (`tiny.en` is quicker, `small.en` hears better) |
 | `MusicFolder` | `../NORA-Robot-v00/music` | the fleet's songs, numbered as on NORA's SD card |
 | `MusicLatency` | `0.0` | seconds her speakers lag, taken off so she starts in time |
+
+---
+
+<div align="center">
+  <a href="https://github.com/SynthWomb">
+    <img src="https://github.com/SynthWomb/synth.womb/blob/main/logos/synthwomb07.png?raw=true" alt="SynthWomb" width="200"/>
+  </a>
+</div>
+
+---
+
+<!-- DREAM-ECOSYSTEM:START -->
 
 ---
 
@@ -129,15 +144,8 @@ Her lines are rendered once and cached in `voice_cache/` (mp3 with ffmpeg, wav w
   </a>
 </div>
 
-<div align="center">
-  <a href="https://github.com/SynthWomb">
-    <img src="https://github.com/SynthWomb/synth.womb/blob/main/logos/synthwomb07.png?raw=true" alt="SynthWomb" width="200"/>
-  </a>
-</div>
-
 ---
 
-<!-- DREAM-ECOSYSTEM:START -->
 ## The DREAM Robotics ecosystem
 
 **Minds** — [DREAM](https://github.com/CursedPrograms/DREAM) companion · [TINA](https://github.com/CursedPrograms/TINA) engineer · [NINA](https://github.com/CursedPrograms/NINA) caretaker · [RIFT](https://github.com/CursedPrograms/RIFT) fleet hub · [LYCEA](https://github.com/CursedPrograms/LYCEA) training school  

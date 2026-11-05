@@ -15,7 +15,7 @@ DEFAULTS = {
     "MaxSteps": 25,
     "Roots": [str(ROOT.parent)],      # folders she may read and work in (the GitHub folder by default)
     "AutoEdit": True,                 # edits inside Roots go ahead (logged; git can undo them); False = ask each time
-    "HindsightUrl": "http://localhost:8888",   # DREAM hosts it. NOTE(move): once TINA moves, point this at DREAM's PC
+    "HindsightUrl": "auto",            # DREAM hosts it; "auto" finds her through RIFT (or an address, e.g. http://<DREAM's PC>:8888)
     "MemoryBank": "tina",
     "RiftHost": "127.0.0.1",
     "RiftPort": 5000,

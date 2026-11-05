@@ -13,7 +13,7 @@
         ".."
       ],
       "AutoEdit": true,
-      "HindsightUrl": "http://localhost:8888",
+      "HindsightUrl": "auto",
       "MemoryBank": "tina",
       "RiftHost": "127.0.0.1",
       "RiftPort": 5000,

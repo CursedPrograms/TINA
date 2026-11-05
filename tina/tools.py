@@ -284,10 +284,10 @@ class Tools:
         return _cut("\n\n".join(f"--- {h['file']} (line {h['line']})\n{h['text'][:700]}" for h in hits), 6000)
 
     def remember(self, fact):
-        return "Remembered." if self.memory.retain(fact, context="noted by TINA") else "Memory server unavailable; noted locally."
+        return "Remembered." if self.memory.retain(fact, context="noted by TINA") else             "Remembered here: DREAM's memory server is away, so it's sent when she's back."
 
-    def recall(self, query):
-        found = self.memory.recall(query)
+    def recall(self, query, bank=""):
+        found = self.memory.recall(query, bank=bank or None)
         return "\n".join(f"- {m}" for m in found) if found else "Nothing remembered about that."
 
     # ---------------------------------------------------------------- the schema the model sees
@@ -311,7 +311,8 @@ class Tools:
         "robot_api": ("Call a robot's HTTP API. GET to read; anything that moves it asks the user.", {"url": "full URL", "method": "GET (default) or POST"}),
         "search_docs": ("Search all READMEs, TODOs, code and configs in the repos by keywords.", {"query": "keywords"}),
         "remember": ("Save a lasting fact or decision to long-term memory.", {"fact": "one clear sentence"}),
-        "recall": ("Look something up in long-term memory.", {"query": "what to look for"}),
+        "recall": ("Look something up in long-term memory (the fleet's, on DREAM's server).",
+                   {"query": "what to look for", "bank": "optional: dream, nina or rift for theirs; empty for yours"}),
     }
     REQUIRED = {"talk_to": ["robot"], "read_file": ["path"], "search_files": ["pattern"], "edit_file": ["path", "old", "new"], "write_file": ["path", "content"],
                 "run_command": ["command"], "compile_sketch": ["folder"], "robot_api": ["url"], "ask_robot": ["robot"], "tell_robot": ["robot", "action"], "drive_by_camera": ["robot", "goal"], "search_docs": ["query"],
