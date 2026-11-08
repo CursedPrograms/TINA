@@ -49,6 +49,7 @@ from .ears import Ears, wake
 from .music import Music
 from .voice import CACHE, Voice, phrasebook
 from . import peer_talk
+from . import talk_switch   # her Brainfuck talking muted or not: /talkmute (RIFT's Fleet/talk_mute.py)
 
 QUIET_S = 120          # after you've used her, she stays yours this long before the robots may chat
 NAG_GAP_S = 180        # she says "don't interrupt me" at most this often
@@ -108,6 +109,8 @@ class Task:
 
 def create_app(cfg):
     app = Flask(__name__, template_folder=str(ROOT / "templates"), static_folder=str(ROOT / "static"))
+    talk = talk_switch.TalkSwitch(str(ROOT / "talk_mute.json"))
+    talk.register(app)
     llm = Ollama(cfg)
     memory = Memory(cfg)
     docs = DocIndex(cfg["Roots"], ROOT / "tina_index.json")
@@ -163,6 +166,8 @@ def create_app(cfg):
         u = next((i for i, (name, text) in enumerate(PHRASES) if words in (name, text) or name.startswith(words) or words.startswith(name)), None)
         if u is None:
             return f"I can only say: {', '.join(n for n, _ in PHRASES)}."
+        if talk.chat_off:
+            return "Your chat switch is off (on your page, or RIFT's), so you're out of the fleet's conversations right now."
         rift = f"http://{cfg['RiftHost']}:{cfg['RiftPort']}"
         try:
             roster = requests.get(f"{rift}/fleet", timeout=12).json()["robots"]
@@ -177,7 +182,8 @@ def create_app(cfg):
         code = voice.code(u)
         if not code:
             return "RIFT's phrasebook isn't next to me, so I can't speak Brainfuck."
-        voice.beep(code, wait=True)
+        if not talk.muted:      # sound off: she says it without the beeps
+            voice.beep(code, wait=True)
         try:
             answered = requests.get(f"http://{who['ip']}:{port}/chirp", params={"u": u + 7}, timeout=5).ok
         except requests.RequestException:
@@ -204,19 +210,22 @@ def create_app(cfg):
             stations = [r["name"] for r in roster if any(str(c).startswith("ask:") for c in r.get("capabilities", []))]
             return (f"{robot} doesn't answer the weather. " +
                     (f"Ask {', '.join(stations)} (the weather station)." if stations else "AURA, the weather station, isn't running."))
-        code = voice.code(17)
+        code = None if talk.muted or talk.chat_off else voice.code(17)   # sound off: no "wx?"; chat off: words only
         if code:
             voice.beep(code, wait=True)
         try:
-            a = requests.get(f"http://{who['ip']}:{port}/ask", params={"q": "weather", "chirp": "1"}, timeout=10).json()
+            a = requests.get(f"http://{who['ip']}:{port}/ask", params={"q": "weather", "chirp": "0" if talk.chat_off else "1"},
+                             timeout=10).json()
         except (requests.RequestException, ValueError):
-            return f'You beeped "wx?" to {who["name"]}, but she did not answer.'
+            return f'You asked {who["name"]} about the weather, but she did not answer.'
         word = (a.get("bf") or {}).get("text", "?")
         line = f'TINA asked {who["name"]} "wx?" and {who["name"]} beeped back "{word}".'
         try:
             requests.post(f"{rift}/mission", json={"who": "TINA", "text": line}, timeout=2)
         except requests.RequestException:
             pass
+        if talk.chat_off:
+            return f'You asked {who["name"]} about the weather in words (your chat is off). She says: {a.get("answer", "")}'
         return f'You beeped "wx?" to {who["name"]} in Brainfuck. She beeped back "{word}" and says: {a.get("answer", "")}'
 
     def available():
@@ -232,7 +241,7 @@ def create_app(cfg):
         if time.time() - used["nagged"] < NAG_GAP_S:
             return
         used["nagged"] = time.time()
-        bf = phrasebook() if brainfuck else None
+        bf = phrasebook() if brainfuck and not talk.muted else None
         if bf:
             voice.beep(bf.compile_text(BUSY_BF))
         else:
@@ -270,7 +279,8 @@ def create_app(cfg):
         lambda text: voice.say(text),                                  # returns once she's said it
         lambda u: voice.beep(voice.code(u)),                           # RIFT times the beeps
         peer_available,
-        extra=lambda: {"doing": "waiting for her next job"})
+        extra=lambda: {"doing": "waiting for her next job"},
+        muted=lambda: talk.muted, chat_off=lambda: talk.chat_off)
     peer_talk.register_routes(app, peer)
 
     @app.route("/")
@@ -327,7 +337,7 @@ def create_app(cfg):
     @app.route("/status")
     def status():
         return jsonify({"model": cfg["Model"], "model_ready": llm.available(), "memory": memory.status(),
-                        "voice": voice.status(), "ears": ears.status(), "busy": busy.locked(), "tasks": [{"id": t.id, "task": t.text[:80], "status": t.status}
+                        "voice": voice.status(), "ears": ears.status(), "busy": busy.locked(), "talk_muted": talk.muted, "chat_off": talk.chat_off, "tasks": [{"id": t.id, "task": t.text[:80], "status": t.status}
                                                          for t in list(tasks.values())[-10:]]})
 
     @app.route("/ping")
@@ -404,11 +414,15 @@ def create_app(cfg):
             u = -1
         if not 0 <= u <= 16:   # 0-13 the phrasebook, 14-16 rock / paper / scissors
             return jsonify({"ok": False, "error": "use /chirp?u=0-16"}), 400
+        if talk.chat_off:       # her chat switch is off: RIFT leaves her out
+            return talk.refuse()
         ok, why = available()
         if not ok:
             if why == "working":
                 nag(brainfuck=True)
             return jsonify({"ok": False, "reason": why}), 409
+        if talk.muted:          # her sound switch is off: said, not beeped
+            return talk.silent()
         code = voice.code(u)
         if not code:
             return jsonify({"ok": False, "error": "RIFT's phrasebook isn't next to TINA"}), 503

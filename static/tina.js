@@ -104,8 +104,23 @@ function state() {
   fetch('/status').then(r => r.json()).then(s => {
     document.getElementById('state').textContent =
       `${s.model_ready ? 'model ready' : 'model missing'} · memory ${s.memory.reachable ? 'on' : 'offline'}${s.memory.pending ? ` (${s.memory.pending} waiting)` : ''}${s.busy ? ' · busy' : ''}${s.voice.piper && s.voice.voice ? '' : ' · no voice'}`;
+    showTalkSwitches(s);
   }).catch(() => {});
 }
+
+// ---- her two talk switches (/talkmute; RIFT has the same): her beeps when she chats, and the chatting itself
+const fleetTalk = document.getElementById('fleetTalk'), fleetChat = document.getElementById('fleetChat');
+function showTalkSwitches(d) {
+  if (d.talk_muted === undefined) return;
+  fleetTalk.checked = !d.talk_muted;
+  fleetChat.checked = !d.chat_off;
+}
+fleetTalk.addEventListener('change', () => {
+  fetch(`/talkmute?on=${fleetTalk.checked ? 0 : 1}`).then(r => r.json()).then(showTalkSwitches).catch(() => {});
+});
+fleetChat.addEventListener('change', () => {
+  fetch(`/talkmute?chat_off=${fleetChat.checked ? 0 : 1}`).then(r => r.json()).then(showTalkSwitches).catch(() => {});
+});
 state(); setInterval(state, 10000);
 
 // ---- her reasoning: shown or hidden (it's never spoken either way)
